@@ -22,4 +22,5 @@ Just:
 
 The phone will not shut off, so make sure it is plugged in otherwise you will run out of battery.
 
-
+### Notes
+Also this is my first android app, so no guarantees  

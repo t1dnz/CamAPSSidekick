@@ -1,14 +1,15 @@
 package nz.t1d.camapsdisplay
 
-import android.content.ComponentName
-import android.content.Intent
+import android.content.*
 import android.os.Bundle
 import android.provider.Settings
 import android.text.TextUtils
 import android.view.Menu
 import android.view.MenuItem
 import android.view.WindowManager
+import android.widget.RemoteViews
 import androidx.appcompat.app.AppCompatActivity
+import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import androidx.navigation.ui.AppBarConfiguration
 import nz.t1d.camapsdisplay.databinding.ActivityMainBinding
 
@@ -18,6 +19,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var appBarConfiguration: AppBarConfiguration
     private lateinit var binding: ActivityMainBinding
     private var displayLocked: Boolean = true
+    private lateinit var notificationReciever: BroadcastReceiver
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -42,12 +44,28 @@ class MainActivity : AppCompatActivity() {
         }
 
         // check if notifications have been enabled
-
-
         val intent = Intent("android.settings.ACTION_NOTIFICATION_LISTENER_SETTINGS")
         if (!isNotificationServiceEnabled()) {
             startActivity(intent)
         }
+
+        // Listen to notifications
+        println("registering listener")
+        notificationReciever = object : BroadcastReceiver() {
+            override fun onReceive(contxt: Context?, intent: Intent?) {
+                println("HAHAHAHAH")
+                val parent = binding.frame
+                val rv = intent?.extras?.get("view") as RemoteViews
+                println("HAHAHAHAH ${rv}")
+                val v = rv.apply(applicationContext,  parent)
+                parent.addView(v)
+
+            }
+        }
+
+        LocalBroadcastManager.getInstance(this).registerReceiver(
+            notificationReciever,  IntentFilter("CamAPSFXNotification")
+        );
     }
 
     /**
@@ -75,6 +93,7 @@ class MainActivity : AppCompatActivity() {
         }
         return false
     }
+
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
         // Inflate the menu; this adds items to the action bar if it is present.
         menuInflater.inflate(R.menu.menu_main, menu)
@@ -89,5 +108,12 @@ class MainActivity : AppCompatActivity() {
             R.id.action_settings -> true
             else -> super.onOptionsItemSelected(item)
         }
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(
+            notificationReciever
+        );
     }
 }
