@@ -6,9 +6,11 @@ import android.provider.Settings
 import android.text.TextUtils
 import android.view.Menu
 import android.view.MenuItem
+import android.view.View
 import android.view.WindowManager
 import android.widget.RemoteViews
 import androidx.appcompat.app.AppCompatActivity
+import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import androidx.navigation.ui.AppBarConfiguration
 import nz.t1d.camapsdisplay.databinding.ActivityMainBinding
@@ -27,9 +29,8 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        setSupportActionBar(binding.toolbar)
-
         // Button to stop the display from sleeping
+        window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         binding.displayLock.setOnClickListener { _ ->
             displayLocked = !displayLocked
             if (displayLocked) {
@@ -54,12 +55,24 @@ class MainActivity : AppCompatActivity() {
         notificationReciever = object : BroadcastReceiver() {
             override fun onReceive(contxt: Context?, intent: Intent?) {
                 println("HAHAHAHAH")
-                val parent = binding.frame
+                val parent = binding.notiflayout
                 val rv = intent?.extras?.get("view") as RemoteViews
                 println("HAHAHAHAH ${rv}")
                 val v = rv.apply(applicationContext,  parent)
-                parent.addView(v)
 
+                val lp = v.layoutParams as ConstraintLayout.LayoutParams
+                lp.bottomToBottom = parent.id
+                lp.endToEnd = parent.id
+                lp.startToStart = parent.id
+                lp.topToTop = parent.id
+
+                v.scaleX = 2f
+                v.scaleY = 2f
+                parent.removeAllViews()
+                parent.addView(v)
+                val visibility: Int = parent.visibility
+                parent.visibility = View.GONE
+                parent.visibility = visibility
             }
         }
 
