@@ -1,14 +1,14 @@
 package nz.t1d.camapsdisplay
 
 import android.content.*
+import android.graphics.drawable.Drawable
 import android.os.Bundle
 import android.provider.Settings
 import android.text.TextUtils
-import android.view.Menu
-import android.view.MenuItem
-import android.view.View
-import android.view.WindowManager
+import android.view.*
+import android.widget.ImageView
 import android.widget.RemoteViews
+import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
@@ -54,25 +54,20 @@ class MainActivity : AppCompatActivity() {
         println("registering listener")
         notificationReciever = object : BroadcastReceiver() {
             override fun onReceive(contxt: Context?, intent: Intent?) {
-                println("HAHAHAHAH")
-                val parent = binding.notiflayout
                 val rv = intent?.extras?.get("view") as RemoteViews
-                println("HAHAHAHAH ${rv}")
-                val v = rv.apply(applicationContext,  parent)
+                val v = rv.apply(applicationContext,  null)
 
-                val lp = v.layoutParams as ConstraintLayout.LayoutParams
-                lp.bottomToBottom = parent.id
-                lp.endToEnd = parent.id
-                lp.startToStart = parent.id
-                lp.topToTop = parent.id
+                val nd = processView(v)
 
-                v.scaleX = 2f
-                v.scaleY = 2f
-                parent.removeAllViews()
-                parent.addView(v)
-                val visibility: Int = parent.visibility
-                parent.visibility = View.GONE
-                parent.visibility = visibility
+                println("AAAAAA ${nd.reading} ${nd.unit}")
+                binding.bglImage.setImageDrawable(nd.image_drawable)
+                binding.bglReading.text = nd.reading
+                binding.bglUnits.text = nd.unit
+
+                // make visible
+                binding.progressBar.visibility = View.INVISIBLE
+                binding.bgllayout.visibility = View.VISIBLE
+
             }
         }
 
@@ -128,5 +123,41 @@ class MainActivity : AppCompatActivity() {
         LocalBroadcastManager.getInstance(this).unregisterReceiver(
             notificationReciever
         );
+    }
+
+    data class NotificationData(var reading: String, var unit: String, var image_drawable: Drawable?)
+
+    // modified from xdrip
+    private fun processView(view: View): NotificationData{
+        // recursivly loop through all children looking for text views
+        val nd = NotificationData("0.0", "mmol/L", null)
+        getTextViews(nd,  view.rootView as ViewGroup)
+        return nd
+    }
+
+
+
+
+
+    private fun getTextViews(output: NotificationData, parent: ViewGroup) {
+        val children = parent.childCount
+        for (i in 0 until children) {
+            val view = parent.getChildAt(i)
+            if (view.visibility === View.VISIBLE) {
+                if (view is TextView) {
+                    val text = (view as TextView).text.toString()
+                    if (text.matches("[0-9]+[.,][0-9]+".toRegex())) {
+                        output.reading = text
+                    }
+
+                }
+                else if (view is ImageView) {
+                    val iv = (view as ImageView)
+                    output.image_drawable = iv.drawable
+                } else if (view is ViewGroup) {
+                    getTextViews(output, view as ViewGroup)
+                }
+            }
+        }
     }
 }
