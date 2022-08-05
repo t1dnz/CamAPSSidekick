@@ -1,7 +1,5 @@
 <resources>
     <string name="app_name">CamAPSDisplay</string>
-    <string name="action_settings">Settings</string>
-    <string name="unknown_bgl">...</string>
-    <string name="locked_display">Display is Locked</string>
-    <string name="unlocked_display">Display can Sleep</string>
+    <string name="locked_display">Display Won\'t Sleep</string>
+    <string name="unlocked_display">Display Can Sleep</string>
 </resources>

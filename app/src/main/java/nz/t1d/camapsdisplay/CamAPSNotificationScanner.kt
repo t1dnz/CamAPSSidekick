@@ -28,7 +28,7 @@ class CamAPSNotificationScanner : NotificationListenerService() {
         if (!packagesToListenTo.contains(packageName) || !ongoing || notification == null || contentView == null) {
             return
         }
-        println("i got a notificaiton I want to show you")
+
         sendMessageToActivity(contentView)
     }
 

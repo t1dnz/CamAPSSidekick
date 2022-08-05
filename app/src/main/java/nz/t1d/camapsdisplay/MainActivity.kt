@@ -5,6 +5,7 @@ import android.graphics.drawable.Drawable
 import android.os.Bundle
 import android.provider.Settings
 import android.text.TextUtils
+import android.text.format.DateUtils
 import android.view.*
 import android.widget.ImageView
 import android.widget.RemoteViews
@@ -14,6 +15,7 @@ import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import androidx.navigation.ui.AppBarConfiguration
 import nz.t1d.camapsdisplay.databinding.ActivityMainBinding
+import java.time.Instant
 
 
 class MainActivity : AppCompatActivity() {
@@ -34,11 +36,9 @@ class MainActivity : AppCompatActivity() {
         binding.displayLock.setOnClickListener { _ ->
             displayLocked = !displayLocked
             if (displayLocked) {
-                println("Locked")
                 binding.displayLock.text = getString(R.string.locked_display)
                 window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
             } else {
-                println("UnLocked")
                 binding.displayLock.text = getString(R.string.unlocked_display)
                 window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
             }
@@ -50,8 +50,13 @@ class MainActivity : AppCompatActivity() {
             startActivity(intent)
         }
 
+        binding.bglTime.format = ""
+        binding.bglTime.start()
+        binding.bglTime.setOnChronometerTickListener { chrono ->
+            chrono.text = DateUtils.getRelativeTimeSpanString(chrono.base)
+        }
+
         // Listen to notifications
-        println("registering listener")
         notificationReciever = object : BroadcastReceiver() {
             override fun onReceive(contxt: Context?, intent: Intent?) {
                 val rv = intent?.extras?.get("view") as RemoteViews
@@ -59,10 +64,10 @@ class MainActivity : AppCompatActivity() {
 
                 val nd = processView(v)
 
-                println("AAAAAA ${nd.reading} ${nd.unit}")
                 binding.bglImage.setImageDrawable(nd.image_drawable)
                 binding.bglReading.text = nd.reading
                 binding.bglUnits.text = nd.unit
+                binding.bglTime.base = nd.time
 
                 // make visible
                 binding.progressBar.visibility = View.INVISIBLE
@@ -102,41 +107,23 @@ class MainActivity : AppCompatActivity() {
         return false
     }
 
-    override fun onCreateOptionsMenu(menu: Menu): Boolean {
-        // Inflate the menu; this adds items to the action bar if it is present.
-        menuInflater.inflate(R.menu.menu_main, menu)
-        return true
-    }
-
-    override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
-        return when (item.itemId) {
-            R.id.action_settings -> true
-            else -> super.onOptionsItemSelected(item)
-        }
-    }
-
     override fun onDestroy() {
         super.onDestroy()
+        binding.bglTime.stop()
         LocalBroadcastManager.getInstance(this).unregisterReceiver(
             notificationReciever
         );
     }
 
-    data class NotificationData(var reading: String, var unit: String, var image_drawable: Drawable?)
+    data class NotificationData(var reading: String, var unit: String, var time: Long, var image_drawable: Drawable?)
 
     // modified from xdrip
     private fun processView(view: View): NotificationData{
-        // recursivly loop through all children looking for text views
-        val nd = NotificationData("0.0", "mmol/L", null)
+        // recursivly loop through all children looking for info
+        val nd = NotificationData("0.0", "mmol/L", Instant.now().toEpochMilli(),null)
         getTextViews(nd,  view.rootView as ViewGroup)
         return nd
     }
-
-
-
 
 
     private fun getTextViews(output: NotificationData, parent: ViewGroup) {
@@ -149,7 +136,6 @@ class MainActivity : AppCompatActivity() {
                     if (text.matches("[0-9]+[.,][0-9]+".toRegex())) {
                         output.reading = text
                     }
-
                 }
                 else if (view is ImageView) {
                     val iv = (view as ImageView)
