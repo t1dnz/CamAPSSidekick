@@ -13,7 +13,7 @@ When using vanilla Dexcom on iOS I did this with guided access which would:
 With CamAPS and android this is not possible without annoyance, so I made this little app.
 Just:
 1. enable pinning apps in settings
-2. install it (by clicking on the build in TODO) (you should already have chrome enabled to install apps from installing CamAPS)
+2. install it (by clicking on the build in TODO) (you should already have Chrome enabled to install apps from installing CamAPS)
 3. open the app
 4. enable the app to listen to notifications
 5. click the stop screen sleeping button (TODO)
@@ -22,4 +22,4 @@ Just:
 The phone will not shut off, so make sure it is plugged in otherwise you will run out of battery.
 
 ### Notes
-Also this is my first android app, so no guarantees. 
+Also this is my first android app, so no guarantees.
