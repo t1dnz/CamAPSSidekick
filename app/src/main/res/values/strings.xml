@@ -1,5 +1,19 @@
 <resources>
     <string name="app_name">CamAPSDisplay</string>
-    <string name="locked_display">Display Won\'t Sleep</string>
-    <string name="unlocked_display">Display Can Sleep</string>
+
+    <!-- Preference Strings -->
+    <string name="general_prefs_title">General</string>
+
+    <string name="display_sleep">Allow Display to Sleep</string>
+    <string name="display_sleep_sum_on">Display can fall asleep and lock while the app is open</string>
+    <string name="display_sleep_sum_off">The app prevents the screen from sleeping</string>
+
+    <string name="bg_units">Units</string>
+
+    <string name="diasend_pref_title">Pull from Diasend</string>
+    <string name="diasend_enable">Enable</string>
+    <string name="diasend_username">Username</string>
+    <string name="diasend_password">Password</string>
+
+
 </resources>

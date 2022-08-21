@@ -1,0 +1,44 @@
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <PreferenceCategory android:title="@string/general_prefs_title">
+
+        <SwitchPreferenceCompat
+            android:key="display_sleep"
+            android:summaryOff="@string/display_sleep_sum_off"
+            android:summaryOn="@string/display_sleep_sum_on"
+            android:title="@string/display_sleep" />
+
+        <ListPreference
+            app:defaultValue="mmoll"
+            app:entries="@array/bg_units"
+            app:entryValues="@array/bg_units_vals"
+            app:key="units"
+            app:title="@string/bg_units"
+            app:useSimpleSummaryProvider="true" />
+
+    </PreferenceCategory>
+
+    <PreferenceCategory android:title="@string/diasend_pref_title">
+
+        <SwitchPreferenceCompat
+            android:key="diasend_enable"
+            android:title="@string/diasend_enable" />
+
+        <EditTextPreference
+            android:dependency="diasend_enable"
+            android:inputType="textEmailAddress"
+            android:key="diasend_username"
+            android:title="@string/diasend_username"
+            app:useSimpleSummaryProvider="true" />
+
+        <EditTextPreference
+            android:dependency="diasend_enable"
+            android:inputType="textPassword"
+            android:key="@string/diasend_password"
+            android:title="@string/diasend_password" />
+
+
+    </PreferenceCategory>
+
+</PreferenceScreen>

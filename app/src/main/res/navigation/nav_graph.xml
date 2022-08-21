@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    app:startDestination="@id/navDisplayFragment">
+
+    <fragment
+        android:id="@+id/navDisplayFragment"
+        android:name="nz.t1d.camapsdisplay.DisplayFragment"
+        android:label="CamAPSDisplay"
+        tools:layout="@layout/fragment_display">
+        <action
+            android:id="@+id/action_navDisplayFragment_to_navSettingsFragment"
+            app:destination="@id/navSettingsFragment"
+            app:enterAnim="@android:anim/slide_in_left" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/navSettingsFragment"
+        android:name="nz.t1d.camapsdisplay.SettingsFragment"
+        android:label="Settings" >
+        <action
+            android:id="@+id/action_navSettingsFragment_to_navDisplayFragment"
+            app:destination="@id/navDisplayFragment" />
+    </fragment>
+
+
+</navigation>

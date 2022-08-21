@@ -3,7 +3,10 @@
     xmlns:tools="http://schemas.android.com/tools"
     package="nz.t1d.camapsdisplay">
 
+    <uses-permission android:name="android.permission.INTERNET" />
+
     <application
+        android:name=".CamAPSDisplayApplication"
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
@@ -25,15 +28,15 @@
             </intent-filter>
         </activity>
 
-        <service android:name=".CamAPSNotificationScanner"
-            android:label="CamAPSNotificationScanner"
+        <service
+            android:name=".CamAPSNotificationScanner"
             android:exported="false"
+            android:label="CamAPSNotificationScanner"
             android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE">
             <intent-filter>
                 <action android:name="android.service.notification.NotificationListenerService" />
             </intent-filter>
         </service>
-
     </application>
 
 </manifest>
