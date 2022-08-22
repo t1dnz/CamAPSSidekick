@@ -8,6 +8,7 @@ import android.service.notification.StatusBarNotification
 import android.widget.RemoteViews
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 
+
 /*
 This class captures the CamAPS FX notifications as RemoteView and then sends them to the main activity to be processed
  */
@@ -20,7 +21,6 @@ class CamAPSNotificationScanner : NotificationListenerService() {
     )
 
     override fun onNotificationPosted(sbn: StatusBarNotification) {
-
         val packageName: String = sbn.packageName
         val notification: Notification = sbn.notification
         val ongoing: Boolean = sbn.isOngoing
@@ -48,3 +48,4 @@ class CamAPSNotificationScanner : NotificationListenerService() {
         return super.onBind(intent)
     }
 }
+

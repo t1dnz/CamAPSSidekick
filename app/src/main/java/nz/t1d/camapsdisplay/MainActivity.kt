@@ -14,13 +14,17 @@ import androidx.navigation.ui.setupActionBarWithNavController
 import androidx.preference.PreferenceManager
 import dagger.hilt.android.AndroidEntryPoint
 import nz.t1d.camapsdisplay.databinding.ActivityMainBinding
+import nz.t1d.di.CamAPSNotificationReceiver
+import javax.inject.Inject
 
 @AndroidEntryPoint
-class MainActivity : AppCompatActivity(), SharedPreferences.OnSharedPreferenceChangeListener{
+class MainActivity : AppCompatActivity(), SharedPreferences.OnSharedPreferenceChangeListener {
 
     private lateinit var appBarConfiguration: AppBarConfiguration
     private lateinit var binding: ActivityMainBinding
 
+    @Inject
+    lateinit var camAPSNotificationReceiver: CamAPSNotificationReceiver
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -31,8 +35,6 @@ class MainActivity : AppCompatActivity(), SharedPreferences.OnSharedPreferenceCh
         val navController = findNavController(R.id.content_fragment)
         appBarConfiguration = AppBarConfiguration(navController.graph)
         setupActionBarWithNavController(navController, appBarConfiguration)
-
-
 
 
         // Make sure listenting to notifications has been enabled to listen to CamAPS notifs
@@ -47,6 +49,13 @@ class MainActivity : AppCompatActivity(), SharedPreferences.OnSharedPreferenceCh
         setupDisplaySleep(prefs.getBoolean("display_sleep", false))
         prefs.registerOnSharedPreferenceChangeListener(this)
 
+        // initialize the camAPS notification receiver to start listening
+        camAPSNotificationReceiver.listen()
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        camAPSNotificationReceiver.stopListening()
     }
 
     /**
