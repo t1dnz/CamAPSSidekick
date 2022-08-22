@@ -5,8 +5,8 @@
     <string name="general_prefs_title">General</string>
 
     <string name="display_sleep">Allow Display to Sleep</string>
-    <string name="display_sleep_sum_on">Display can fall asleep and lock while the app is open</string>
-    <string name="display_sleep_sum_off">The app prevents the screen from sleeping</string>
+    <string name="display_sleep_sum_on">Display Can Sleep</string>
+    <string name="display_sleep_sum_off">Display Cannot Sleep</string>
 
     <string name="bg_units">Units</string>
 

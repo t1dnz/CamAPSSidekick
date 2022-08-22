@@ -1,6 +1,8 @@
 package nz.t1d.diasend
 
 import android.content.Context
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.preference.PreferenceManager
 import com.google.gson.GsonBuilder
 import com.google.gson.annotations.SerializedName

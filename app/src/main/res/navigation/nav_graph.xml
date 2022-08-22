@@ -12,7 +12,8 @@
         <action
             android:id="@+id/action_navDisplayFragment_to_navSettingsFragment"
             app:destination="@id/navSettingsFragment"
-            app:enterAnim="@android:anim/slide_in_left" />
+            app:enterAnim="@android:anim/slide_in_left"
+            app:exitAnim="@android:anim/slide_out_right" />
     </fragment>
 
     <fragment
@@ -21,7 +22,9 @@
         android:label="Settings" >
         <action
             android:id="@+id/action_navSettingsFragment_to_navDisplayFragment"
-            app:destination="@id/navDisplayFragment" />
+            app:destination="@id/navDisplayFragment"
+            app:enterAnim="@anim/slide_in_right"
+            app:exitAnim="@anim/slide_out_left" />
     </fragment>
 
 

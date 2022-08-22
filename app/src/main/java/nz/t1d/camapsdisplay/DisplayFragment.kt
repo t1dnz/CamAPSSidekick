@@ -82,8 +82,6 @@ class DisplayFragment : Fragment() {
         val menuHost: MenuHost = requireActivity()
         menuHost.addMenuProvider(object : MenuProvider {
             override fun onCreateMenu(menu: Menu, menuInflater: MenuInflater) {
-                // Add menu items here
-                menuInflater.inflate(R.menu.menu, menu)
                 val act = (activity as MainActivity).supportActionBar!!
                 act.setDisplayHomeAsUpEnabled(true)
                 act.setDisplayShowHomeEnabled(true)

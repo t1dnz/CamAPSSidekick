@@ -24,8 +24,9 @@ class SettingsFragment : PreferenceFragmentCompat() {
 
         menuHost.addMenuProvider(object : MenuProvider {
             override fun onCreateMenu(menu: Menu, menuInflater: MenuInflater) {
-                // Add menu items here
-                menuInflater.inflate(R.menu.menu, menu)
+                val act = (activity as MainActivity).supportActionBar!!
+                act.setDisplayHomeAsUpEnabled(true)
+                act.setDisplayShowHomeEnabled(true)
             }
 
             override fun onMenuItemSelected(menuItem: MenuItem): Boolean {
@@ -44,6 +45,5 @@ class SettingsFragment : PreferenceFragmentCompat() {
 
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
         setPreferencesFromResource(R.xml.root_preferences, rootKey)
-        val menuHost: MenuHost = requireActivity()
     }
 }

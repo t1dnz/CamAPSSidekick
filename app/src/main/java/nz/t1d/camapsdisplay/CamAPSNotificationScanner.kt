@@ -26,7 +26,7 @@ class CamAPSNotificationScanner : NotificationListenerService() {
         val ongoing: Boolean = sbn.isOngoing
         val contentView = notification.contentView
 
-        if (!packagesToListenTo.contains(packageName) || !ongoing || notification == null || contentView == null) {
+        if (!packagesToListenTo.contains(packageName) || !ongoing || contentView == null) {
             return
         }
 

@@ -2,20 +2,21 @@ package nz.t1d.camapsdisplay
 
 import android.content.ComponentName
 import android.content.Intent
+import android.content.SharedPreferences
 import android.os.Bundle
 import android.provider.Settings
 import android.text.TextUtils
-import android.view.Menu
 import android.view.WindowManager
 import androidx.appcompat.app.AppCompatActivity
 import androidx.navigation.findNavController
 import androidx.navigation.ui.AppBarConfiguration
 import androidx.navigation.ui.setupActionBarWithNavController
+import androidx.preference.PreferenceManager
 import dagger.hilt.android.AndroidEntryPoint
 import nz.t1d.camapsdisplay.databinding.ActivityMainBinding
 
 @AndroidEntryPoint
-class MainActivity : AppCompatActivity() {
+class MainActivity : AppCompatActivity(), SharedPreferences.OnSharedPreferenceChangeListener{
 
     private lateinit var appBarConfiguration: AppBarConfiguration
     private lateinit var binding: ActivityMainBinding
@@ -31,21 +32,22 @@ class MainActivity : AppCompatActivity() {
         appBarConfiguration = AppBarConfiguration(navController.graph)
         setupActionBarWithNavController(navController, appBarConfiguration)
 
-        // Button to stop the display from sleeping
-        window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
 
-        // check if notifications have been enabled
+
+
+        // Make sure listenting to notifications has been enabled to listen to CamAPS notifs
         val intent = Intent("android.settings.ACTION_NOTIFICATION_LISTENER_SETTINGS")
         if (!isNotificationServiceEnabled()) {
             startActivity(intent)
         }
-    }
 
-    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
-        menuInflater.inflate(R.menu.menu, menu)
-        return true
-    }
 
+        // Setup Preferences
+        val prefs = PreferenceManager.getDefaultSharedPreferences(applicationContext)
+        setupDisplaySleep(prefs.getBoolean("display_sleep", false))
+        prefs.registerOnSharedPreferenceChangeListener(this)
+
+    }
 
     /**
      * Is Notification Service Enabled.
@@ -73,5 +75,17 @@ class MainActivity : AppCompatActivity() {
         return false
     }
 
+    override fun onSharedPreferenceChanged(sp: SharedPreferences, key: String) {
+        when (key) {
+            "display_sleep" -> setupDisplaySleep(sp.getBoolean(key, false))
+        }
+    }
 
+    private fun setupDisplaySleep(displaySleep: Boolean) {
+        if (displaySleep) {
+            window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        } else {
+            window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        }
+    }
 }
