@@ -43,8 +43,7 @@ class CamAPSNotificationReceiver @Inject constructor(
 
                 // Extract the information from the view
                 val nd = processView(v)
-                ddr.previousNotificationData = ddr.recentNotificationData
-                ddr.recentNotificationData = nd
+                ddr.newNotificationAvailable(nd)
             }
         }
 

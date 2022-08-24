@@ -1,10 +1,12 @@
 package nz.t1d.diasend
 
 import android.content.Context
+import android.util.Log
 import androidx.preference.PreferenceManager
 import com.google.gson.GsonBuilder
 import com.google.gson.annotations.SerializedName
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.datetime.LocalDate
 import kotlinx.serialization.Contextual
 import kotlinx.serialization.Serializable
 import okhttp3.OkHttpClient
@@ -13,6 +15,8 @@ import retrofit2.Response
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.http.*
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 import java.util.*
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -108,6 +112,8 @@ data class DiasendDatum(
     val createdAt: Date,
     @SerializedName("value")
     val value: String,
+    @SerializedName("total_value")
+    val totalValue: Float,
     @SerializedName("unit")
     val unit: String,
     @SerializedName("flags")
@@ -139,12 +145,12 @@ class DiasendClient @Inject constructor(@ApplicationContext context: Context) {
     val prefs = PreferenceManager.getDefaultSharedPreferences(context)
 
     private val BASE_URL = "https://api.diasend.com/1/"
-
+    private val TAG = "DiasendClient"
     val APP_USER_NAME_PASS =
         "a486o3nvdu88cg0sos4cw8cccc0o0cg.api.diasend.com:8imoieg4pyos04s44okoooowkogsco4"
 
-    private lateinit var _accessToken: String
-    private var _accessTokenExpiry: Int = 0
+    private var accessToken: String = ""
+    private var accessTokenExpiry: LocalDateTime = LocalDateTime.now().minusDays(10) // force reauth at first
 
     // Client code
     private val retrofit: Retrofit by lazy {
@@ -171,13 +177,16 @@ class DiasendClient @Inject constructor(@ApplicationContext context: Context) {
 
     // API code
     private suspend fun getAccessToken(): String {
-        if (this::_accessToken.isInitialized) {
-            return this._accessToken
+        if (accessTokenExpiry > LocalDateTime.now()) {
+            // If the access token has expired or on first init
+            Log.d(TAG,"Returning existing Auth token")
+            return this.accessToken
         }
+        Log.d(TAG, "Authenticating Diasend Client")
+
         val authPayload = APP_USER_NAME_PASS
         val data = authPayload.toByteArray()
         val base64 = Base64.getEncoder().encodeToString(data)
-
 
         val response = diasendClient.getToken(
             authorization = "Basic $base64".trim(),
@@ -187,20 +196,22 @@ class DiasendClient @Inject constructor(@ApplicationContext context: Context) {
             scope = "PATIENT DIASEND_MOBILE_DEVICE_DATA_RW"
         )
 
-
         val body = response.body() ?: throw Exception("No Access Token")
 
-        _accessToken = body.accessToken
-        _accessTokenExpiry = body.expiresIn
-        return _accessToken
+        accessToken = body.accessToken
+        accessTokenExpiry = LocalDateTime.now().plusSeconds(body.expiresIn.toLong()-300) // Fetch the auth token minus 5 mins for safety
+        return accessToken
     }
 
-    suspend fun getPatientData(): List<DiasendDatum>? {
+    suspend fun getPatientData(date_from: LocalDateTime, date_to: LocalDateTime): List<DiasendDatum>? {
+        val fmtr = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss")
+        val date_from_str = date_from.format(fmtr)
+        val date_to_str = date_to.format(fmtr)
         return diasendClient.patientData(
             "Bearer ${getAccessToken()}",
             "combined",
-            date_from = "2022-08-15T14:12:12",
-            date_to = "2022-08-17T12:12:12",
-        ).body()
+            date_from = date_from_str,
+            date_to = date_to_str,
+            ).body()
     }
 }

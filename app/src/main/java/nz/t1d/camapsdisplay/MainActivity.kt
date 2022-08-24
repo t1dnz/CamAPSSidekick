@@ -8,6 +8,7 @@ import android.provider.Settings
 import android.text.TextUtils
 import android.view.WindowManager
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.findNavController
 import androidx.navigation.ui.AppBarConfiguration
 import androidx.navigation.ui.setupActionBarWithNavController
@@ -15,6 +16,7 @@ import androidx.preference.PreferenceManager
 import dagger.hilt.android.AndroidEntryPoint
 import nz.t1d.camapsdisplay.databinding.ActivityMainBinding
 import nz.t1d.di.CamAPSNotificationReceiver
+import nz.t1d.di.DiasendPoller
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -25,6 +27,9 @@ class MainActivity : AppCompatActivity(), SharedPreferences.OnSharedPreferenceCh
 
     @Inject
     lateinit var camAPSNotificationReceiver: CamAPSNotificationReceiver
+
+    @Inject
+    lateinit var diasendPoller: DiasendPoller
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -51,11 +56,13 @@ class MainActivity : AppCompatActivity(), SharedPreferences.OnSharedPreferenceCh
 
         // initialize the camAPS notification receiver to start listening
         camAPSNotificationReceiver.listen()
+        diasendPoller.start_diasend_poller(lifecycleScope)
     }
 
     override fun onDestroy() {
         super.onDestroy()
         camAPSNotificationReceiver.stopListening()
+        diasendPoller.stop_diasend_poller()
     }
 
     /**

@@ -9,6 +9,7 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.Lifecycle
 import androidx.navigation.fragment.findNavController
 import dagger.hilt.android.AndroidEntryPoint
+
 import nz.t1d.camapsdisplay.databinding.FragmentDisplayBinding
 import nz.t1d.di.DisplayDataRepository
 import javax.inject.Inject
@@ -18,9 +19,10 @@ class DisplayFragment : Fragment() {
 
     @Inject
     lateinit var ddr: DisplayDataRepository
-    private val ddrListener = { -> setValues() }
+    private val ddrListener = { -> updateValues() }
 
     private var _binding: FragmentDisplayBinding? = null
+
 
     // This property is only valid between onCreateView and
     // onDestroyView.
@@ -32,8 +34,9 @@ class DisplayFragment : Fragment() {
     ): View? {
         _binding = FragmentDisplayBinding.inflate(inflater, container, false)
 
+
         // sets up the minutes ago text field
-        binding.bglTime.format = ""
+
         binding.bglTime.start()
         binding.bglTime.setOnChronometerTickListener { chrono ->
             chrono.text = DateUtils.getRelativeTimeSpanString(chrono.base)
@@ -60,19 +63,20 @@ class DisplayFragment : Fragment() {
             }
         }, viewLifecycleOwner, Lifecycle.State.RESUMED)
 
-        setValues()
+        updateValues()
 
         ddr.listeners.add(ddrListener)
         return binding.root
     }
 
 
-    fun setValues() {
-        binding.bglImage.setImageDrawable(ddr.getImageToDraw())
-        binding.bglReading.text = ddr.getBGLReading().toString()
-        binding.bglUnits.text = ddr.getUnit()
-        binding.bglTime.base = ddr.getLastBGLReadingTime()
-        binding.bglDiff.text = ddr.getBGLDiff()
+    fun updateValues() {
+        binding.bglImage.setImageDrawable(ddr.bglDirectionImage)
+        binding.bglReading.text = ddr.bglReading.toString()
+        binding.bglUnits.text = ddr.bglUnit
+        binding.bglTime.base = ddr.bglReadingTime
+        binding.bglDiff.text = ddr.bglDiff
+        binding.iob.text = ddr.insulinOnBoard.toString()
     }
 
     override fun onDestroyView() {

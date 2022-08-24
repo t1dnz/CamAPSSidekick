@@ -10,10 +10,17 @@
 
     <string name="bg_units">Units</string>
 
+    <string name="insulin_prefs_title">Insulin</string>
+    <string name="insulin_duration">Duration of Action (mins)</string>
+    <string name="insulin_onset">Onset of Action (mins)</string>
+    <string name="insulin_peak">Peak of Action (mins)</string>
+
     <string name="diasend_pref_title">Pull from Diasend</string>
     <string name="diasend_enable">Enable</string>
     <string name="diasend_username">Username</string>
     <string name="diasend_password">Password</string>
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
 
 
 </resources>

@@ -19,6 +19,28 @@
 
     </PreferenceCategory>
 
+    <PreferenceCategory android:title="@string/insulin_prefs_title">
+
+        <EditTextPreference
+            android:defaultValue="20"
+            android:inputType="number"
+            android:key="insulin_duration"
+            android:title="@string/insulin_duration" app:useSimpleSummaryProvider="true" />
+
+        <EditTextPreference
+            android:defaultValue="true"
+            android:inputType="number"
+            android:key="insulin_onset"
+            android:title="@string/insulin_onset"  app:useSimpleSummaryProvider="true"/>
+
+        <EditTextPreference
+            android:defaultValue="60"
+            android:inputType="number"
+            android:key="insulin_peak"
+            android:title="@string/insulin_peak" app:useSimpleSummaryProvider="true"/>
+
+    </PreferenceCategory>
+
     <PreferenceCategory android:title="@string/diasend_pref_title">
 
         <SwitchPreferenceCompat
@@ -34,10 +56,8 @@
 
         <EditTextPreference
             android:dependency="diasend_enable"
-            android:inputType="textPassword"
-            android:key="@string/diasend_password"
+            android:key="diasend_password"
             android:title="@string/diasend_password" />
-
 
     </PreferenceCategory>
 
