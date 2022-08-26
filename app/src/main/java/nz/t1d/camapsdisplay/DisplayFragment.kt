@@ -2,16 +2,35 @@ package nz.t1d.camapsdisplay
 
 import android.os.Bundle
 import android.text.format.DateUtils
-import android.view.*
+import android.view.Gravity
+import android.view.LayoutInflater
+import android.view.Menu
+import android.view.MenuInflater
+import android.view.MenuItem
+import android.view.View
+import android.view.ViewGroup
+import android.widget.Chronometer
+import android.widget.ImageView
+import android.widget.LinearLayout
+import android.widget.RelativeLayout
+import android.widget.TextView
+import androidx.core.content.res.ResourcesCompat
 import androidx.core.view.MenuHost
 import androidx.core.view.MenuProvider
+import androidx.core.view.setMargins
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Lifecycle
 import androidx.navigation.fragment.findNavController
 import dagger.hilt.android.AndroidEntryPoint
-
 import nz.t1d.camapsdisplay.databinding.FragmentDisplayBinding
+import nz.t1d.di.BGLReading
+import nz.t1d.di.BasalInsulinChange
+import nz.t1d.di.BaseDataClass
+import nz.t1d.di.BolusInsulin
+import nz.t1d.di.CarbIntake
 import nz.t1d.di.DisplayDataRepository
+import java.text.NumberFormat
+import java.time.ZoneOffset
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -76,9 +95,99 @@ class DisplayFragment : Fragment() {
         binding.bglUnits.text = ddr.bglUnit
         binding.bglTime.base = ddr.bglReadingTime
         binding.bglDiff.text = ddr.bglDiff
-        binding.iob.text = ddr.insulinOnBoard.toString()
+
+        // diasend values
+        val nf2dp = NumberFormat.getNumberInstance()
+        nf2dp.maximumFractionDigits = 2
+
+        val nf1dp = NumberFormat.getNumberInstance()
+        nf1dp.maximumFractionDigits = 1
+
+        val nf0dp = NumberFormat.getNumberInstance()
+        nf0dp.maximumFractionDigits = 0
+
+        binding.iobtv.text = "${nf1dp.format(ddr.insulinOnBoardBolus)}u"
+        binding.TIRtv.text = "${nf0dp.format(ddr.timeInRange*100)}%"
+        binding.basaltv.text = "${nf2dp.format(ddr.insulinCurrentBasal)}u"
+        binding.carbstv.text = "${nf0dp.format(ddr.carbsOnBoard)}g"
+
+        // Build the list of recent events
+        binding.recentEventRows.removeAllViews()
+        for( re in ddr.recentEvents) {
+            binding.recentEventRows.addView(createRecentEventRow(re))
+        }
+        binding.recentBglRows.removeAllViews()
+        for( re in ddr.bglReadings.take(10)) {
+            binding.recentBglRows.addView(createRecentEventRow(re))
+        }
     }
 
+    private fun createRecentEventRow(re: BaseDataClass): View {
+
+        val row =  LinearLayout(context)
+        row.orientation = LinearLayout.HORIZONTAL
+        row.gravity = Gravity.CENTER_VERTICAL
+        val layoutParams = RelativeLayout.LayoutParams(
+            RelativeLayout.LayoutParams.MATCH_PARENT, RelativeLayout.LayoutParams.MATCH_PARENT
+        )
+        layoutParams.setMargins(10)
+        row.layoutParams = layoutParams
+
+        val lps = { -> val lp = RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.WRAP_CONTENT, RelativeLayout.LayoutParams.WRAP_CONTENT);
+            lp.setMargins(5)
+            lp
+        }
+        val image = ImageView(context)
+        val text = TextView(context)
+        val chron = TextView(context)
+
+        image.layoutParams = RelativeLayout.LayoutParams(50, 50)
+        text.layoutParams = lps()
+        chron.layoutParams = lps()
+        chron.text = "${re.minsAgo()}m ago"
+
+        val dBasal = ResourcesCompat.getDrawable(requireContext().resources, R.drawable.ic_basal, null)
+        val dBolus = ResourcesCompat.getDrawable(requireContext().resources, R.drawable.ic_bolus, null)
+        val dBGL = ResourcesCompat.getDrawable(requireContext().resources, R.drawable.ic_bgl, null)
+        val dCarb = ResourcesCompat.getDrawable(requireContext().resources, R.drawable.ic_carb, null)
+
+        when (re) {
+            is BasalInsulinChange -> {image.setImageDrawable(dBasal); text.text = "${re.value}u"}
+            is BolusInsulin -> {image.setImageDrawable(dBolus); text.text = "${re.value}u"}
+            is CarbIntake -> {image.setImageDrawable(dCarb); text.text = "${re.value}g"}
+            is BGLReading -> {image.setImageDrawable(dBGL); text.text = "${re.value}mmol/L"}
+        }
+
+        row.addView(chron)
+        row.addView(image)
+        row.addView(text)
+
+        return row
+//        <LinearLayout
+//        android:layout_width="match_parent"
+//        android:layout_height="match_parent"
+//        android:orientation="horizontal"
+//        android:gravity="left"
+//        android:layout_margin="5dp"
+//        android:layout_gravity="center_vertical">
+//
+//        <ImageView
+//        android:id="@+id/imageView"
+//        android:layout_width="wrap_content"
+//        android:layout_height="20dp"
+//
+//        android:layout_weight="0"
+//        android:src="@drawable/ic_bolus_24dp" />
+//
+//        <TextView
+//        android:id="@+id/textView"
+//        android:layout_width="wrap_content"
+//        android:layout_height="wrap_content"
+//        android:layout_weight="1"
+//        android:textSize="14sp"
+//        android:text="" />
+//        </LinearLayout>
+    }
     override fun onDestroyView() {
         super.onDestroyView()
         binding.bglTime.stop()

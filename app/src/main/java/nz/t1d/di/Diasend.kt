@@ -6,7 +6,6 @@ import androidx.preference.PreferenceManager
 import com.google.gson.GsonBuilder
 import com.google.gson.annotations.SerializedName
 import dagger.hilt.android.qualifiers.ApplicationContext
-import kotlinx.datetime.LocalDate
 import kotlinx.serialization.Contextual
 import kotlinx.serialization.Serializable
 import okhttp3.OkHttpClient
@@ -111,7 +110,7 @@ data class DiasendDatum(
     @Contextual
     val createdAt: Date,
     @SerializedName("value")
-    val value: String,
+    val value: Float,
     @SerializedName("total_value")
     val totalValue: Float,
     @SerializedName("unit")
@@ -173,6 +172,7 @@ class DiasendClient @Inject constructor(@ApplicationContext context: Context) {
 
     private val diasendClient: Diasend by lazy {
         retrofit.create(Diasend::class.java)
+
     }
 
     // API code
