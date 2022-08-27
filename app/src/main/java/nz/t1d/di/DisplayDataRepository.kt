@@ -15,12 +15,20 @@ import java.time.ZoneId
 import java.util.*
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlin.math.atan
+import kotlin.math.pow
+import kotlin.math.sqrt
 import kotlin.math.truncate
 
 
 interface BaseDataClass {
     val time: LocalDateTime
     var value: Float
+
+    fun secondsAgo(): Long {
+        return Duration.between(time, LocalDateTime.now()).toSeconds()
+    }
+
 
     fun minsAgo(): Long {
         return Duration.between(time, LocalDateTime.now()).toMinutes()
@@ -52,35 +60,63 @@ data class BolusInsulin(
 ) : BaseDataClass {
     private val TAG = "BolusInsulin"
     fun valueAfterDecay(): Float {
-        val mins = minsAgo()
-        // TODO starting with linear decay but clearly this is incorect
-        if (mins > dia) {
+        // This is taken from the Bilinear algorithm here https://openaps.readthedocs.io/en/latest/docs/While%20You%20Wait%20For%20Gear/understanding-insulin-on-board-calculations.html
+        // actual code here https://github.com/openaps/oref0/blob/88cf032aa74ff25f69464a7d9cd601ee3940c0b3/lib/iob/calculate.js#L36
+        // basically insulin rate increases linearly from start to peak, then decreases linearly from peak to dia
+        // this makes a triangle which we can calculate the area left which will be the total remaining insulin
+        // TODO: maybe use the exponential insulin curves also described on the page above
+        // TODO: take onset into consideration by squashing triangle a bit
+
+        val minsAgo = minsAgo().toFloat()
+        if (minsAgo >= dia) {
             return 0f
         }
-        val decayRate = (dia - mins) / dia
-        val ret = decayRate * value
+
+        // percent of insulin used is 100 so we make a triangle whose area is 100
+        // 1/2 w * h  = 100, w = dia, solve for h. so h = (100*2)/dia
+        val height = 200f/dia // for 180 it is about 1.11
+
+        // Now we can divide that into two right angle triangels, first the one going to peak the second coming down
+        // Because it is linear up and linear down all we need to know is the interior angles of the two triangles to find the area
+        val areaOfFirstTrialngle = (peak*height)/2 // 1/2 * w * h
+        val areaOfSecondTrialngle = ((dia-peak)*height)/2 // 1/2 * w * h
+
+        val slopeFirstTriangle = height/peak
+        val slopeSecondTriangle = height/(dia-peak)
+
+
+        var percentOfInsulinUsed = 0f
+        var pastPeak = false
+        var triangleArea = 0f
+        if ( minsAgo < peak) {
+            pastPeak = false
+            triangleArea = areaOfTriangleFromSlope(slopeFirstTriangle, minsAgo)
+            percentOfInsulinUsed = triangleArea
+
+        } else {
+            pastPeak = true
+
+            // The second triangle is at the back, so need to minus it from the total to find actual area
+            triangleArea = areaOfTriangleFromSlope(slopeSecondTriangle, dia - minsAgo)
+
+            percentOfInsulinUsed = areaOfFirstTrialngle + (areaOfSecondTrialngle - triangleArea)
+        }
+
+        val ret = (1 - (percentOfInsulinUsed/100)) * value
         return ret
     }
 
+    private fun areaOfTriangleFromSlope(slope: Float, width: Float): Float {
+        val height = slope * width
+        return  (height*width)/2f
+    }
 }
 
 data class CarbIntake(
     override var value: Float,
     override var time: LocalDateTime,
     var decay: Float,
-) : BaseDataClass {
-    private val TAG = "CarbIntake"
-    fun valueAfterDecay(): Float {
-        val mins = minsAgo()
-        // TODO starting with linear decay but clearly this is incorect
-        if (mins > decay) {
-            return 0f
-        }
-        val decayRate = (decay - mins) / decay
-        val ret = decayRate * value
-        return ret
-    }
-}
+) : BaseDataClass
 
 data class BGLReading(
     override var value: Float,
@@ -362,28 +398,6 @@ class DisplayDataRepository @Inject constructor(@ApplicationContext context: Con
             insulinBasalBoluses.add(BolusInsulin(currentBasal.value / 15.0f, basalTime, insulinOnset, insulinPeak, insulinDuration))
         }
     }
-//    private fun calculateBasalTotal(midnight : LocalDateTime): Float {
-//        for (d in insulinBasalChanges) {
-//            if (d.time > midnight) {
-//                insulingBasalTotal += d.value
-//            }
-//        }
-//        return 0.0f
-//    }
-//    private fun calculateIOBBasal(midnight : LocalDateTime): Float  {
-//        // Not sure if this is a good idea, but the idea is to treat every minute as a bolus at 1/60
-//
-//        for (d in insulinBasalChanges) {
-//            if (d.time > midnight) {
-//                insulingBasalTotal += d.value
-//            }
-//            if (d.time > d.dia) {
-//                val basalsRemaingInsulin = d.value // TODO make relateive to time
-//                insulinOnBoardBasal += basalsRemaingInsulin
-//                insulinOnBoard += basalsRemaingInsulin
-//            }
-//        }
-//    }
 
 }
 

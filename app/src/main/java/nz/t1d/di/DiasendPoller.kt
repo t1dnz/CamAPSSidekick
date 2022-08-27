@@ -70,14 +70,15 @@ class DiasendPoller @Inject constructor(
                         Log.e(TAG, "Error", e)
                     }
 
-                    var waitTime: Long = 5  // 5 mins
+                    var waitTime: Long = 300  // 5 mins
                     if (ddr.bglReadings.size > 0) {
                         // try align the delay of the call with the previous bgl reading
                         val first = ddr.bglReadings.first()
-                        waitTime = waitTime - first.minsAgo().mod(5)
+                        waitTime = waitTime - first.secondsAgo().mod(300)
                     }
-                    Log.d(TAG, "WAITING $waitTime mins until calling diasend again")
-                    delay(waitTime * 60 * 1000)
+                    waitTime += 30 // Add 15 seconds to give time to sync up
+                    Log.d(TAG, "WAITING $waitTime seconds until calling diasend again")
+                    delay(waitTime * 1000)
                 }
             }
         }

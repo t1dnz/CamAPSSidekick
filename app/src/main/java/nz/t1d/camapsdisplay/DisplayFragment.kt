@@ -149,7 +149,7 @@ class DisplayFragment : Fragment() {
         val dCarb = ResourcesCompat.getDrawable(requireContext().resources, R.drawable.ic_carb, null)
 
         when (re) {
-            is BolusInsulin -> {image.setImageDrawable(dBolus); text.text = "${re.value}u (${nf1dp.format(re.valueAfterDecay())}u) bolus"}
+            is BolusInsulin -> {image.setImageDrawable(dBolus); text.text = "${re.value}u (${nf1dp.format(re.valueAfterDecay())}u) bolus -- ${re.minsAgoString()}"}
             is CarbIntake -> {image.setImageDrawable(dCarb); text.text = "${re.value}g carbs -- ${re.minsAgoString()}"}
             is BGLReading -> {image.setImageDrawable(dBGL); text.text = "${re.minsAgoString()} -- ${re.value}mmol/L"}
         }

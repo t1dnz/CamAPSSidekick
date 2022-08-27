@@ -22,13 +22,13 @@
     <PreferenceCategory android:title="@string/insulin_prefs_title">
 
         <EditTextPreference
-            android:defaultValue="20"
+            android:defaultValue="180"
             android:inputType="number"
             android:key="insulin_duration"
             android:title="@string/insulin_duration" app:useSimpleSummaryProvider="true" />
 
         <EditTextPreference
-            android:defaultValue="true"
+            android:defaultValue="20"
             android:inputType="number"
             android:key="insulin_onset"
             android:title="@string/insulin_onset"  app:useSimpleSummaryProvider="true"/>
