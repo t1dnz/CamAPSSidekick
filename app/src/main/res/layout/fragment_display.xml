@@ -13,6 +13,7 @@
         android:id="@+id/readinglayout"
         android:layout_width="fill_parent"
         android:layout_height="0dp"
+        android:layout_margin="10dp"
         android:layout_weight="1"
         android:orientation="horizontal"
         tools:layout_editor_absoluteX="1dp"
@@ -97,139 +98,155 @@
 
     <LinearLayout
         android:id="@+id/insulinlayout"
-        android:layout_width="fill_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
-        android:orientation="vertical"
-        tools:layout_editor_absoluteX="1dp"
-        tools:layout_editor_absoluteY="1dp">
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_horizontal"
+        android:orientation="horizontal">
 
         <LinearLayout
-            android:layout_width="match_parent"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:gravity="center_horizontal"
-            android:orientation="horizontal">
+            android:layout_margin="10dp"
+            android:orientation="vertical">
 
-            <LinearLayout
+            <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_margin="10dp"
-                android:orientation="vertical">
+                android:text="IOB (Bolus)"
+                android:textColor="@color/teal_700"
+                android:textSize="10sp" />
 
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="IOB"
-                    android:textColor="@color/teal_700"
-                    android:textSize="10sp" />
-
-                <TextView
-                    android:id="@+id/iobtv"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="00.0u"
-                    android:textSize="20sp"
-                    android:textStyle="bold" />
-            </LinearLayout>
-
-            <LinearLayout
+            <TextView
+                android:id="@+id/iobbolustv"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_margin="10dp"
-                android:orientation="vertical">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="TIR"
-                    android:textColor="@color/teal_700"
-                    android:textSize="10sp" />
-
-                <TextView
-                    android:id="@+id/TIRtv"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="00.0%"
-                    android:textSize="20sp"
-                    android:textStyle="bold" />
-            </LinearLayout>
-
-            <LinearLayout
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_margin="10dp"
-                android:orientation="vertical">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Basal"
-                    android:textColor="@color/teal_700"
-                    android:textSize="10sp" />
-
-                <TextView
-                    android:id="@+id/basaltv"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="0.0u"
-                    android:textSize="20sp"
-                    android:textStyle="bold" />
-            </LinearLayout>
-
-            <LinearLayout
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_margin="10dp"
-                android:orientation="vertical">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Carbs"
-                    android:textColor="@color/teal_700"
-                    android:textSize="10sp" />
-
-                <TextView
-                    android:id="@+id/carbstv"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="00.0g"
-                    android:textSize="20sp"
-                    android:textStyle="bold" />
-            </LinearLayout>
-
+                android:text="00.0u"
+                android:textSize="20sp"
+                android:textStyle="bold" />
         </LinearLayout>
 
         <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:orientation="horizontal">
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_margin="10dp"
+            android:orientation="vertical">
 
-            <ScrollView
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:layout_weight=".5">
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="IOB (Basal)"
+                android:textColor="@color/teal_700"
+                android:textSize="10sp" />
 
-                <LinearLayout
-                    android:id="@+id/recent_event_rows"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical"></LinearLayout>
-            </ScrollView>
-
-            <ScrollView
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:layout_weight=".5">
-
-                <LinearLayout
-                    android:id="@+id/recent_bgl_rows"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical"></LinearLayout>
-            </ScrollView>
+            <TextView
+                android:id="@+id/iobbasaltv"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="00.0u"
+                android:textSize="20sp"
+                android:textStyle="bold" />
         </LinearLayout>
+
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_margin="10dp"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Basal"
+                android:textColor="@color/teal_700"
+                android:textSize="10sp" />
+
+            <TextView
+                android:id="@+id/basaltv"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="0.0u"
+                android:textSize="20sp"
+                android:textStyle="bold" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_margin="10dp"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="TIR"
+                android:textColor="@color/teal_700"
+                android:textSize="10sp" />
+
+            <TextView
+                android:id="@+id/TIRtv"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="00.0%"
+                android:textSize="20sp"
+                android:textStyle="bold" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_margin="10dp"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Mean/STD BGL"
+                android:textColor="@color/teal_700"
+                android:textSize="10sp" />
+
+            <TextView
+                android:id="@+id/meanstdtv"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="0.0/0.0"
+                android:textSize="20sp"
+                android:textStyle="bold" />
+        </LinearLayout>
+
     </LinearLayout>
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="0.02"
+        android:background="?android:attr/listDivider" />
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:orientation="horizontal">
+
+        <ScrollView
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <LinearLayout
+                android:id="@+id/recent_event_rows"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"></LinearLayout>
+        </ScrollView>
+
+
+    </LinearLayout>
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="0.02"
+        android:background="?android:attr/listDivider" />
 
     <LinearLayout
         android:id="@+id/graphlayout"
@@ -237,8 +254,19 @@
         android:layout_height="0dp"
         android:layout_weight="1"
         android:orientation="horizontal"
-        tools:layout_editor_absoluteX="1dp"
-        tools:layout_editor_absoluteY="1dp">
+
+        >
+
+        <ScrollView
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <LinearLayout
+                android:id="@+id/recent_bgl_rows"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"></LinearLayout>
+        </ScrollView>
 
     </LinearLayout>
 

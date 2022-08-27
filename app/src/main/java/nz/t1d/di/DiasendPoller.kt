@@ -5,18 +5,14 @@ import android.util.Log
 import androidx.lifecycle.LifecycleCoroutineScope
 import androidx.preference.PreferenceManager
 import dagger.hilt.android.qualifiers.ApplicationContext
-import dagger.hilt.android.scopes.ActivityScoped
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
-
 import nz.t1d.diasend.DiasendClient
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
-import java.time.ZoneId
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -29,8 +25,8 @@ class DiasendPoller @Inject constructor(
     private var TAG = "DiasendPoller"
     val prefs = PreferenceManager.getDefaultSharedPreferences(context)
 
-    private var poller : Job? = null
-    private var updater : Job? = null
+    private var poller: Job? = null
+    private var updater: Job? = null
     private var from: LocalDateTime? = null
     /*
         Rules for fetching Diasend Data
@@ -38,7 +34,7 @@ class DiasendPoller @Inject constructor(
         3. fetch more recent data every 5 minutes
      */
 
-    fun  start_diasend_poller(scope: LifecycleCoroutineScope)  {
+    fun start_diasend_poller(scope: LifecycleCoroutineScope) {
         // poll diasend 5 mins
         Log.d(TAG, "Poller starting")
 
@@ -51,12 +47,12 @@ class DiasendPoller @Inject constructor(
             }
         }
 
-        if(poller == null) {
+        if (poller == null) {
             poller = scope.launch {
-                while(isActive) {
+                while (isActive) {
                     if (!prefs.getBoolean("diasend_enable", false)) {
                         Log.d(TAG, "Skipping loop Diasend not enabled")
-                        delay(1*60*1000) // wait a minute
+                        delay(1 * 60 * 1000) // wait a minute
                         continue
                     }
 
@@ -74,16 +70,24 @@ class DiasendPoller @Inject constructor(
                         Log.e(TAG, "Error", e)
                     }
 
-                    val t5mins: Long = 5 * 60 * 1000 // 5 mins
-                    delay(t5mins)
+                    var waitTime: Long = 5  // 5 mins
+                    if (ddr.bglReadings.size > 0) {
+                        // try align the delay of the call with the previous bgl reading
+                        val first = ddr.bglReadings.first()
+                        waitTime = waitTime - first.minsAgo().mod(5)
+                    }
+                    Log.d(TAG, "WAITING $waitTime mins until calling diasend again")
+                    delay(waitTime * 60 * 1000)
                 }
             }
         }
         if (updater == null) {
             updater = scope.launch {
-                Log.d(TAG, "Updating listeners")
-                ddr.updatedListeners()
-                delay(30 * 1000) // every 30 seconds update ui
+                while (isActive) {
+                    Log.d(TAG, "Updating listeners")
+                    ddr.updatedListeners()
+                    delay(30 * 1000) // every 30 seconds update ui
+                }
             }
         }
 

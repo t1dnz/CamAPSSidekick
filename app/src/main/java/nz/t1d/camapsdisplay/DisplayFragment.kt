@@ -42,6 +42,9 @@ class DisplayFragment : Fragment() {
 
     private var _binding: FragmentDisplayBinding? = null
 
+    private val nf2dp = NumberFormat.getNumberInstance()
+    private val nf1dp = NumberFormat.getNumberInstance()
+    private val nf0dp = NumberFormat.getNumberInstance()
 
     // This property is only valid between onCreateView and
     // onDestroyView.
@@ -53,6 +56,9 @@ class DisplayFragment : Fragment() {
     ): View? {
         _binding = FragmentDisplayBinding.inflate(inflater, container, false)
 
+        nf2dp.maximumFractionDigits = 2
+        nf1dp.maximumFractionDigits = 1
+        nf0dp.maximumFractionDigits = 0
 
         // sets up the minutes ago text field
 
@@ -97,19 +103,13 @@ class DisplayFragment : Fragment() {
         binding.bglDiff.text = ddr.bglDiff
 
         // diasend values
-        val nf2dp = NumberFormat.getNumberInstance()
-        nf2dp.maximumFractionDigits = 2
 
-        val nf1dp = NumberFormat.getNumberInstance()
-        nf1dp.maximumFractionDigits = 1
 
-        val nf0dp = NumberFormat.getNumberInstance()
-        nf0dp.maximumFractionDigits = 0
-
-        binding.iobtv.text = "${nf1dp.format(ddr.insulinOnBoardBolus)}u"
+        binding.iobbolustv.text = "${nf1dp.format(ddr.insulinOnBoardBolus)}u"
+        binding.iobbasaltv.text = "${nf1dp.format(ddr.insulinOnBoardBasal)}u"
         binding.TIRtv.text = "${nf0dp.format(ddr.timeInRange*100)}%"
         binding.basaltv.text = "${nf2dp.format(ddr.insulinCurrentBasal)}u"
-        binding.carbstv.text = "${nf0dp.format(ddr.carbsOnBoard)}g"
+        binding.meanstdtv.text = "${nf1dp.format(ddr.meanBGL)}/${nf1dp.format(ddr.stdBGL)}"
 
         // Build the list of recent events
         binding.recentEventRows.removeAllViews()
@@ -130,21 +130,18 @@ class DisplayFragment : Fragment() {
         val layoutParams = RelativeLayout.LayoutParams(
             RelativeLayout.LayoutParams.MATCH_PARENT, RelativeLayout.LayoutParams.MATCH_PARENT
         )
-        layoutParams.setMargins(10)
+        layoutParams.setMargins(20)
         row.layoutParams = layoutParams
 
         val lps = { -> val lp = RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.WRAP_CONTENT, RelativeLayout.LayoutParams.WRAP_CONTENT);
-            lp.setMargins(5)
+            lp.setMargins(10,3,3,3)
             lp
         }
         val image = ImageView(context)
         val text = TextView(context)
-        val chron = TextView(context)
 
         image.layoutParams = RelativeLayout.LayoutParams(50, 50)
         text.layoutParams = lps()
-        chron.layoutParams = lps()
-        chron.text = "${re.minsAgo()}m ago"
 
         val dBasal = ResourcesCompat.getDrawable(requireContext().resources, R.drawable.ic_basal, null)
         val dBolus = ResourcesCompat.getDrawable(requireContext().resources, R.drawable.ic_bolus, null)
@@ -152,13 +149,11 @@ class DisplayFragment : Fragment() {
         val dCarb = ResourcesCompat.getDrawable(requireContext().resources, R.drawable.ic_carb, null)
 
         when (re) {
-            is BasalInsulinChange -> {image.setImageDrawable(dBasal); text.text = "${re.value}u"}
-            is BolusInsulin -> {image.setImageDrawable(dBolus); text.text = "${re.value}u"}
-            is CarbIntake -> {image.setImageDrawable(dCarb); text.text = "${re.value}g"}
-            is BGLReading -> {image.setImageDrawable(dBGL); text.text = "${re.value}mmol/L"}
+            is BolusInsulin -> {image.setImageDrawable(dBolus); text.text = "${re.value}u (${nf1dp.format(re.valueAfterDecay())}u) bolus"}
+            is CarbIntake -> {image.setImageDrawable(dCarb); text.text = "${re.value}g carbs -- ${re.minsAgoString()}"}
+            is BGLReading -> {image.setImageDrawable(dBGL); text.text = "${re.minsAgoString()} -- ${re.value}mmol/L"}
         }
 
-        row.addView(chron)
         row.addView(image)
         row.addView(text)
 

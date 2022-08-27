@@ -12,11 +12,10 @@ import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
 import java.time.ZoneId
-import java.time.ZoneOffset
 import java.util.*
 import javax.inject.Inject
 import javax.inject.Singleton
-import kotlin.collections.HashSet
+import kotlin.math.truncate
 
 
 interface BaseDataClass {
@@ -24,7 +23,18 @@ interface BaseDataClass {
     var value: Float
 
     fun minsAgo(): Long {
-        return Duration.between(time,LocalDateTime.now()).toMinutes()
+        return Duration.between(time, LocalDateTime.now()).toMinutes()
+    }
+
+    fun minsAgoString(): String {
+        val mins = minsAgo()
+        val hours = truncate(mins / 60.0f).toLong()
+
+        if (hours != 0L) {
+            val hourMins = mins - (60 * hours)
+            return "${hours}h ${hourMins}m ago"
+        }
+        return "${mins}m ago"
     }
 }
 
@@ -36,12 +46,41 @@ data class BasalInsulinChange(
 data class BolusInsulin(
     override var value: Float,
     override var time: LocalDateTime,
-) : BaseDataClass
+    var onset: Float,
+    var peak: Float,
+    var dia: Float,
+) : BaseDataClass {
+    private val TAG = "BolusInsulin"
+    fun valueAfterDecay(): Float {
+        val mins = minsAgo()
+        // TODO starting with linear decay but clearly this is incorect
+        if (mins > dia) {
+            return 0f
+        }
+        val decayRate = (dia - mins) / dia
+        val ret = decayRate * value
+        return ret
+    }
+
+}
 
 data class CarbIntake(
     override var value: Float,
     override var time: LocalDateTime,
-) : BaseDataClass
+    var decay: Float,
+) : BaseDataClass {
+    private val TAG = "CarbIntake"
+    fun valueAfterDecay(): Float {
+        val mins = minsAgo()
+        // TODO starting with linear decay but clearly this is incorect
+        if (mins > decay) {
+            return 0f
+        }
+        val decayRate = (decay - mins) / decay
+        val ret = decayRate * value
+        return ret
+    }
+}
 
 data class BGLReading(
     override var value: Float,
@@ -62,6 +101,10 @@ object dataComparitor : Comparator<BaseDataClass> {
 class DisplayDataRepository @Inject constructor(@ApplicationContext context: Context) {
     val prefs = PreferenceManager.getDefaultSharedPreferences(context)
 
+    var insulinDuration = prefs.getString("insulin_duration", "0.0")!!.toFloat()
+    var insulinOnset = prefs.getString("insulin_onset", "0.0")!!.toFloat()
+    var insulinPeak = prefs.getString("insulin_peak", "0.0")!!.toFloat()
+
     private val TAG = "DisplayDataRepository"
 
     //
@@ -75,15 +118,6 @@ class DisplayDataRepository @Inject constructor(@ApplicationContext context: Con
     var bglDirectionImage: Drawable? = null
     var bglUnit: String = "mmol/L"
 
-    // Diasend data ordered so that newest is at the front of the set
-    var diasendData: SortedSet<DiasendDatum> = sortedSetOf(object : Comparator<DiasendDatum> {
-        override fun compare(p0: DiasendDatum?, p1: DiasendDatum?): Int {
-            if (p1 == null || p0 == null) {
-                return 0
-            }
-            return p1.createdAt.compareTo(p0.createdAt)
-        }
-    })
 
     // insulin
     var insulinOnBoard: Float = 0f
@@ -94,6 +128,7 @@ class DisplayDataRepository @Inject constructor(@ApplicationContext context: Con
     var insulinCurrentBasal: Float = 0f
     var insulinBoluses: SortedSet<BolusInsulin> = sortedSetOf(dataComparitor)
     var insulinBasalChanges: SortedSet<BasalInsulinChange> = sortedSetOf(dataComparitor)
+    var insulinBasalBoluses: SortedSet<BolusInsulin> = sortedSetOf(dataComparitor)
 
     // carbs
     var carbsOnBoard: Float = 0f
@@ -125,7 +160,6 @@ class DisplayDataRepository @Inject constructor(@ApplicationContext context: Con
 
         // Update listeners something has changes
         updatedListeners()
-        // queue up a fetch from diasend
     }
 
     fun updatedListeners() {
@@ -145,18 +179,28 @@ class DisplayDataRepository @Inject constructor(@ApplicationContext context: Con
         if (patientData == null) {
             return
         }
-        // add all to the set which will dedup and order them
-        diasendData.addAll(patientData)
+
+        // Calculate a bunch of usaeful stuff here
+        insulinDuration = prefs.getString("insulin_duration", "0.0")!!.toFloat()
+        insulinOnset = prefs.getString("insulin_onset", "0.0")!!.toFloat()
+        insulinPeak = prefs.getString("insulin_peak", "0.0")!!.toFloat()
+        val carbDuration = 120f
+
+        // Some useful dates
+        val now = LocalDateTime.now()
+        val midnight = LocalDateTime.of(LocalDate.now(), LocalTime.MIDNIGHT)
+        val insulinDurationTime = now.minusMinutes((insulinDuration * 1.5).toLong())
+        val midnightMinus = midnight.minusMinutes((insulinDuration * 1.5).toLong())
 
         // extract all the types
         for (d in patientData) {
             var ld = d.createdAt.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime()
             when (d.type) {
                 "insulin_bolus" -> {
-                    insulinBoluses.add(BolusInsulin(d.totalValue, ld))
+                    insulinBoluses.add(BolusInsulin(d.totalValue, ld, insulinOnset, insulinPeak, insulinDuration))
                 }
                 "carb" -> {
-                    carbs.add(CarbIntake(d.value, ld))
+                    carbs.add(CarbIntake(d.value, ld, carbDuration))
                 }
                 "insulin_basal" -> {
                     insulinBasalChanges.add(BasalInsulinChange(d.value, ld))
@@ -170,29 +214,17 @@ class DisplayDataRepository @Inject constructor(@ApplicationContext context: Con
             }
         }
 
-        // Compress Basal Changes (there are a ton of useless ones)
-        var previousMinsAgo: Long = -1
-        var previousValue: Float = -1f
-        val removeElemets = mutableListOf<BasalInsulinChange>()
-        for (re in insulinBasalChanges) {
-            if (re.minsAgo() == previousMinsAgo || re.value == previousValue) {
-                removeElemets.add(re)
-                continue
-            }
-            previousMinsAgo = re.minsAgo()
-            previousValue = re.value
+        // Since this program can run for days to make sure we are discarding any really old data we remove it from the sets here
+        insulinBoluses = insulinBoluses.filter { d -> d.time > midnightMinus }.toSortedSet(dataComparitor)
+        carbs = carbs.filter { d -> d.time > midnightMinus }.toSortedSet(dataComparitor)
+        insulinBasalChanges = insulinBasalChanges.filter { d -> d.time > midnightMinus }.toSortedSet(dataComparitor)
+        bglReadings = bglReadings.filter { d -> d.time > midnightMinus }.toSortedSet(dataComparitor)
 
-        }
-        for (re in removeElemets) {
-            insulinBasalChanges.remove(re)
-        }
+        // Take the basal changes and calculate the equivilant boluses
+        processBasalChanges(midnightMinus)
 
 
         // end of compression
-        println(insulinBoluses)
-        println(insulinBasalChanges)
-        println(carbs)
-        println(bglReadings)
 
         insulinCurrentBasal = if (insulinBasalChanges.size > 0) insulinBasalChanges.first().value else 0.0f
 
@@ -210,100 +242,148 @@ class DisplayDataRepository @Inject constructor(@ApplicationContext context: Con
 
         recentEvents.clear()
 
-        val insulinDuration = prefs.getString("insulin_duration", "0.0")!!.toFloat()
-        val insulinOnset = prefs.getString("insulin_onset", "0.0")!!.toFloat()
-        val insulinPeak = prefs.getString("insulin_peak", "0.0")!!.toFloat()
 
-        val now = LocalDateTime.now()
-        val midnight = LocalDateTime.of(LocalDate.now(), LocalTime.MIDNIGHT)
-        val insulinDurationTime = now.minusMinutes((insulinDuration * 1.5).toLong())
-        val glucoseRecentTime = now.minusMinutes(30)
-
-
-
-        // Calculate
+        // BOLUSES
         for (d in insulinBoluses) {
             if (d.time > midnight) {
                 insulinBolusTotal += d.value
             }
+
+            val bolusesRemaingInsulin = d.valueAfterDecay()
+            insulinOnBoardBolus += bolusesRemaingInsulin
+            insulinOnBoard += bolusesRemaingInsulin
+
             if (d.time > insulinDurationTime) {
-                val bolusesRemaingInsulin = calculateInsulinDecay(d.value, d.minsAgo(), insulinDuration)
-                insulinOnBoardBolus += bolusesRemaingInsulin
-                insulinOnBoard += bolusesRemaingInsulin
                 recentEvents.add(d)
             }
         }
 
+
         // Basal insulin is much harder because it is changes in a curve where the integral is the total.
-        for (d in insulinBasalChanges) {
+
+        for (d in insulinBasalBoluses) {
             if (d.time > midnight) {
                 insulingBasalTotal += d.value
             }
-            if (d.time > insulinDurationTime) {
-                val basalsRemaingInsulin = d.value // TODO make relateive to time
-                insulinOnBoardBasal += basalsRemaingInsulin
-                insulinOnBoard += basalsRemaingInsulin
-                recentEvents.add(d)
-            }
+
+            val bolusesRemaingInsulin = d.valueAfterDecay()
+            insulinOnBoardBasal += bolusesRemaingInsulin
+            insulinOnBoard += bolusesRemaingInsulin
         }
 
-        for (d in carbs) {
 
-            if (d.time > midnight) {
-                carbsTotal += d.value
-            }
+        // CARBS
+        for (d in carbs) {
             if (d.time > insulinDurationTime) {
-                val carbsWithDecay = calculateCarbDecay(d.value, d.minsAgo(), 120f) // TODO guess a decay rate for carbs and add to the total
-                carbsOnBoard += carbsWithDecay
                 recentEvents.add(d)
             }
         }
 
         var todayTotalReadings = 0f
         var todayTotalInrangeReadings = 0f
-
+        var sumTotalReadings = 0f
         for (d in bglReadings) {
             if (d.time > midnight) {
                 todayTotalReadings += 1
+                sumTotalReadings += d.value
                 if (d.value >= 3.9 && d.value <= 10) {
                     todayTotalInrangeReadings += 1
                 }
             }
-            // TODO check if this reading is significatnly in front of the notification reader and write it out
         }
-        timeInRange = todayTotalInrangeReadings/todayTotalReadings
+
+        timeInRange = todayTotalInrangeReadings / todayTotalReadings
+        meanBGL = sumTotalReadings / todayTotalReadings
+        var tmpSTD: Double = 0.0;
+        for (d in bglReadings) {
+            if (d.time > midnight) {
+                tmpSTD += Math.pow((d.value - meanBGL).toDouble(), 2.0)
+            }
+        }
+        stdBGL = Math.sqrt((tmpSTD / todayTotalReadings).toDouble()).toFloat()
 
         // OVERRIDES OF THE NOTIF DATA
-        if (bglReadings.size > 0 &&  bglReading == 0f) {
+        if (bglReadings.size > 0 && bglReading == 0f) {
             val first = bglReadings.first()
             bglReading = first.value
+            bglReadingTime = first.time.atZone(ZoneId.systemDefault()).toEpochSecond() * 1000
         }
 
         // update
         updatedListeners()
     }
 
-    private fun calculateInsulinDecay(value: Float, mins: Long, dia: Float) : Float {
-        // TODO starting with linear decay but clearly this is incorect
-        if (mins > dia) {
-            return 0f
-        }
-        val decay = (dia-mins)/dia
-        val ret = decay * value
-        Log.d(TAG, "Insulin Decay Calculation v $value, m $mins, d: $dia = $ret")
-        return ret
-    }
 
-    private fun calculateCarbDecay(value: Float, mins: Long, decayTime : Float) : Float {
-        // TODO starting with linear decay but clearly this is incorect
-        if (mins > decayTime) {
-            return 0f
+    private fun processBasalChanges(midnightMinus: LocalDateTime) {
+        // Compress Basal Changes (there are a ton of useless ones)
+        var previousMinsAgo: Long = -1
+        var previousValue: Float = -1f
+        val removeElemets = mutableListOf<BasalInsulinChange>()
+        for (re in insulinBasalChanges) {
+            if (re.minsAgo() == previousMinsAgo || re.value == previousValue) {
+                removeElemets.add(re)
+                continue
+            }
+            previousMinsAgo = re.minsAgo()
+            previousValue = re.value
+
         }
-        val decay = (decayTime-mins)/decayTime
-        val ret = decay * value
-        Log.d(TAG, "Carb Decay Calculation v $value, m $mins, d: $decay = $ret")
-        return ret
+        for (re in removeElemets) {
+            insulinBasalChanges.remove(re)
+        }
+
+        // This may be a stupid way to do this
+        // We want to calculate IOB and total basal but for that we need to turn the basalratechanges into "how much insulin was delivered?"
+        // For that what we do is calculate
+
+        // Delete All previous items (this may be overkill but I think
+        insulinBasalBoluses.clear()
+
+        // Get now every 4 minutes calculate the basal rate, add that value as a bolusChange to insulinBasalBoluses
+        var basalTime = LocalDateTime.now()
+        var insulinBasalChangesList = ArrayDeque(insulinBasalChanges.toMutableList())
+        var currentBasal = insulinBasalChangesList.first()
+        var isEmpty = insulinBasalChangesList.isEmpty()
+        while (basalTime > midnightMinus) {
+            basalTime = basalTime.minusMinutes(4)
+            while (basalTime < currentBasal.time) {
+                if (insulinBasalChangesList.isEmpty()) {
+                    isEmpty = true
+                    break
+                } else {
+                    currentBasal = insulinBasalChangesList.pop()
+                }
+            }
+            if (isEmpty) {
+                Log.d(TAG, "processBasalChanges no finished at time $basalTime")
+                break
+            }
+            // divide by 15 to make the rate per 4 mins from per hour
+            insulinBasalBoluses.add(BolusInsulin(currentBasal.value / 15.0f, basalTime, insulinOnset, insulinPeak, insulinDuration))
+        }
     }
+//    private fun calculateBasalTotal(midnight : LocalDateTime): Float {
+//        for (d in insulinBasalChanges) {
+//            if (d.time > midnight) {
+//                insulingBasalTotal += d.value
+//            }
+//        }
+//        return 0.0f
+//    }
+//    private fun calculateIOBBasal(midnight : LocalDateTime): Float  {
+//        // Not sure if this is a good idea, but the idea is to treat every minute as a bolus at 1/60
+//
+//        for (d in insulinBasalChanges) {
+//            if (d.time > midnight) {
+//                insulingBasalTotal += d.value
+//            }
+//            if (d.time > d.dia) {
+//                val basalsRemaingInsulin = d.value // TODO make relateive to time
+//                insulinOnBoardBasal += basalsRemaingInsulin
+//                insulinOnBoard += basalsRemaingInsulin
+//            }
+//        }
+//    }
 
 }
 
