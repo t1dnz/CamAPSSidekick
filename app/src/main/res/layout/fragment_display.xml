@@ -1,275 +1,284 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+    android:id="@+id/swiperefresh"
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
     tools:context=".DisplayFragment"
     tools:layout_editor_absoluteX="1dp"
-    tools:layout_editor_absoluteY="1dp">
-
+    tools:layout_editor_absoluteY="1dp"
+    >
 
     <LinearLayout
-        android:id="@+id/readinglayout"
-        android:layout_width="fill_parent"
-        android:layout_height="wrap_content"
-        android:layout_margin="10dp"
-
-        android:orientation="horizontal"
-        tools:layout_editor_absoluteX="1dp"
-        tools:layout_editor_absoluteY="1dp">
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        >
 
 
         <LinearLayout
-            android:id="@+id/bgllayout"
+            android:id="@+id/readinglayout"
             android:layout_width="fill_parent"
-            android:layout_height="fill_parent"
-            android:gravity="center"
+            android:layout_height="wrap_content"
+            android:layout_margin="10dp"
+
+            android:orientation="horizontal"
+            tools:layout_editor_absoluteX="1dp"
+            tools:layout_editor_absoluteY="1dp">
+
+
+            <LinearLayout
+                android:id="@+id/bgllayout"
+                android:layout_width="fill_parent"
+                android:layout_height="fill_parent"
+                android:gravity="center"
+                android:orientation="horizontal">
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:id="@+id/bgl_time"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="minutes"
+                        android:textSize="20sp" />
+
+                    <TextView
+                        android:id="@+id/bgl_reading"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="00.0"
+                        android:textSize="120sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/bgl_units"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="units"
+                        android:textColor="@color/teal_700"
+                        android:textSize="20sp" />
+                </LinearLayout>
+
+                <androidx.constraintlayout.widget.Barrier
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent" />
+
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:orientation="vertical">
+
+                    <ImageView
+                        android:id="@+id/bgl_image"
+                        android:layout_width="155dp"
+                        android:layout_height="75dp"
+                        android:layout_weight="1"
+                        android:scaleY="1" />
+
+                    <TextView
+                        android:id="@+id/bgl_diff"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:fontFamily="sans-serif"
+                        android:text="diff"
+                        android:textSize="20sp"
+                        android:textStyle="bold" />
+
+                </LinearLayout>
+
+            </LinearLayout>
+
+
+        </LinearLayout>
+
+
+        <LinearLayout
+            android:id="@+id/insulinlayout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_horizontal"
             android:orientation="horizontal">
 
             <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:gravity="center"
+                android:layout_margin="10dp"
                 android:orientation="vertical">
 
                 <TextView
-                    android:id="@+id/bgl_time"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="minutes"
-                    android:textSize="20sp" />
-
-                <TextView
-                    android:id="@+id/bgl_reading"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="00.0"
-                    android:textSize="120sp"
-                    android:textStyle="bold" />
-
-                <TextView
-                    android:id="@+id/bgl_units"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="units"
+                    android:text="IOB (Bolus)"
                     android:textColor="@color/teal_700"
-                    android:textSize="20sp" />
-            </LinearLayout>
-
-            <androidx.constraintlayout.widget.Barrier
-                android:layout_width="match_parent"
-                android:layout_height="match_parent" />
-
-
-            <LinearLayout
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:gravity="center"
-                android:orientation="vertical">
-
-                <ImageView
-                    android:id="@+id/bgl_image"
-                    android:layout_width="155dp"
-                    android:layout_height="75dp"
-                    android:layout_weight="1"
-                    android:scaleY="1" />
+                    android:textSize="10sp" />
 
                 <TextView
-                    android:id="@+id/bgl_diff"
+                    android:id="@+id/iobbolustv"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:fontFamily="sans-serif"
-                    android:text="diff"
+                    android:text="00.0u"
                     android:textSize="20sp"
                     android:textStyle="bold" />
+            </LinearLayout>
 
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_margin="10dp"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="IOB (Basal)"
+                    android:textColor="@color/teal_700"
+                    android:textSize="10sp" />
+
+                <TextView
+                    android:id="@+id/iobbasaltv"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="00.0u"
+                    android:textSize="20sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_margin="10dp"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Basal"
+                    android:textColor="@color/teal_700"
+                    android:textSize="10sp" />
+
+                <TextView
+                    android:id="@+id/basaltv"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="0.0u"
+                    android:textSize="20sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_margin="10dp"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="TIR"
+                    android:textColor="@color/teal_700"
+                    android:textSize="10sp" />
+
+                <TextView
+                    android:id="@+id/TIRtv"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="00.0%"
+                    android:textSize="20sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_margin="10dp"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Mean/STD BGL"
+                    android:textColor="@color/teal_700"
+                    android:textSize="10sp" />
+
+                <TextView
+                    android:id="@+id/meanstdtv"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="0.0/0.0"
+                    android:textSize="20sp"
+                    android:textStyle="bold" />
             </LinearLayout>
 
         </LinearLayout>
 
-
-    </LinearLayout>
-
-
-    <LinearLayout
-        android:id="@+id/insulinlayout"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:gravity="center_horizontal"
-        android:orientation="horizontal">
-
-        <LinearLayout
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_margin="10dp"
-            android:orientation="vertical">
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="IOB (Bolus)"
-                android:textColor="@color/teal_700"
-                android:textSize="10sp" />
-
-            <TextView
-                android:id="@+id/iobbolustv"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="00.0u"
-                android:textSize="20sp"
-                android:textStyle="bold" />
-        </LinearLayout>
-
-        <LinearLayout
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_margin="10dp"
-            android:orientation="vertical">
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="IOB (Basal)"
-                android:textColor="@color/teal_700"
-                android:textSize="10sp" />
-
-            <TextView
-                android:id="@+id/iobbasaltv"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="00.0u"
-                android:textSize="20sp"
-                android:textStyle="bold" />
-        </LinearLayout>
-
-
-        <LinearLayout
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_margin="10dp"
-            android:orientation="vertical">
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Basal"
-                android:textColor="@color/teal_700"
-                android:textSize="10sp" />
-
-            <TextView
-                android:id="@+id/basaltv"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="0.0u"
-                android:textSize="20sp"
-                android:textStyle="bold" />
-        </LinearLayout>
-
-        <LinearLayout
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_margin="10dp"
-            android:orientation="vertical">
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="TIR"
-                android:textColor="@color/teal_700"
-                android:textSize="10sp" />
-
-            <TextView
-                android:id="@+id/TIRtv"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="00.0%"
-                android:textSize="20sp"
-                android:textStyle="bold" />
-        </LinearLayout>
-
-        <LinearLayout
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_margin="10dp"
-            android:orientation="vertical">
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Mean/STD BGL"
-                android:textColor="@color/teal_700"
-                android:textSize="10sp" />
-
-            <TextView
-                android:id="@+id/meanstdtv"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="0.0/0.0"
-                android:textSize="20sp"
-                android:textStyle="bold" />
-        </LinearLayout>
-
-    </LinearLayout>
-
-    <View
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="0.02"
-        android:background="?android:attr/listDivider" />
-
-    <LinearLayout
-        android:layout_width="fill_parent"
-        android:layout_height="0dp"
-        android:layout_weight=".3"
-        android:orientation="horizontal">
-
-        <ScrollView
+        <View
             android:layout_width="match_parent"
-            android:layout_height="match_parent">
+            android:layout_height="0dp"
+            android:layout_weight="0.02"
+            android:background="?android:attr/listDivider" />
 
-            <LinearLayout
-                android:id="@+id/recent_event_rows"
+        <LinearLayout
+            android:layout_width="fill_parent"
+            android:layout_height="0dp"
+            android:layout_weight=".3"
+            android:orientation="horizontal">
+
+            <androidx.core.widget.NestedScrollView
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"></LinearLayout>
-        </ScrollView>
+                android:layout_height="match_parent">
+
+                <LinearLayout
+                    android:id="@+id/recent_event_rows"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"></LinearLayout>
+            </androidx.core.widget.NestedScrollView>
 
 
-    </LinearLayout>
+        </LinearLayout>
 
-    <View
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="0.02"
-        android:background="?android:attr/listDivider" />
-
-    <LinearLayout
-        android:id="@+id/graphlayout"
-        android:layout_width="fill_parent"
-        android:layout_height="0dp"
-        android:layout_weight=".3"
-        android:orientation="horizontal"
-
-        >
-
-        <ScrollView
+        <View
             android:layout_width="match_parent"
-            android:layout_height="match_parent">
+            android:layout_height="0dp"
+            android:layout_weight="0.02"
+            android:background="?android:attr/listDivider" />
 
-            <LinearLayout
-                android:id="@+id/recent_bgl_rows"
+        <LinearLayout
+            android:id="@+id/graphlayout"
+            android:layout_width="fill_parent"
+            android:layout_height="0dp"
+            android:layout_weight=".3"
+            android:orientation="horizontal"
+
+            >
+
+            <androidx.core.widget.NestedScrollView
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"></LinearLayout>
-        </ScrollView>
+                android:layout_height="match_parent">
+
+                <LinearLayout
+                    android:id="@+id/recent_bgl_rows"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"></LinearLayout>
+            </androidx.core.widget.NestedScrollView>
+
+        </LinearLayout>
 
     </LinearLayout>
 
-</LinearLayout>
-
-
+</androidx.swiperefreshlayout.widget.SwipeRefreshLayout>

@@ -56,7 +56,7 @@ class MainActivity : AppCompatActivity(), SharedPreferences.OnSharedPreferenceCh
 
         // initialize the camAPS notification receiver to start listening
         camAPSNotificationReceiver.listen()
-        diasendPoller.start_diasend_poller(lifecycleScope)
+        diasendPoller.start_diasend_poller()
     }
 
     override fun onDestroy() {

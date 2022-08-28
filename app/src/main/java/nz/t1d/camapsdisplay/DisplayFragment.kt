@@ -2,7 +2,6 @@ package nz.t1d.camapsdisplay
 
 import android.content.res.Resources
 import android.os.Bundle
-import android.text.SpannableStringBuilder
 import android.util.TypedValue
 import android.view.Gravity
 import android.view.LayoutInflater
@@ -32,7 +31,9 @@ import nz.t1d.di.BGLReading
 import nz.t1d.di.BaseDataClass
 import nz.t1d.di.BolusInsulin
 import nz.t1d.di.CarbIntake
+import nz.t1d.di.DiasendPoller
 import nz.t1d.di.DisplayDataRepository
+import okhttp3.internal.wait
 import java.text.NumberFormat
 import javax.inject.Inject
 
@@ -41,6 +42,10 @@ class DisplayFragment : Fragment() {
 
     @Inject
     lateinit var ddr: DisplayDataRepository
+
+    @Inject
+    lateinit var diasendPoller: DiasendPoller
+
     private val ddrListener = { -> updateValues() }
 
     private var _binding: FragmentDisplayBinding? = null
@@ -63,6 +68,10 @@ class DisplayFragment : Fragment() {
         nf1dp.maximumFractionDigits = 1
         nf0dp.maximumFractionDigits = 0
 
+        binding.swiperefresh.setOnRefreshListener {
+            val job = diasendPoller.fetchData()
+            job.invokeOnCompletion {  binding.swiperefresh.isRefreshing = false }
+        }
 
         // Setup the actions on the menu when the fragment is open
         val menuHost: MenuHost = requireActivity()
@@ -167,8 +176,8 @@ class DisplayFragment : Fragment() {
                 text.text = buildSpannedString {
                     italic { append(re.minsAgoString()) }
                     append(" -- ")
-                    bold { color(ResourcesCompat.getColor(requireContext().resources, R.color.teal_700, null)) { append("${re.value}u")}}
-                    italic { append(" (${nf1dp.format(re.valueAfterDecay())}u)")}
+                    bold { color(ResourcesCompat.getColor(requireContext().resources, R.color.teal_700, null)) { append("${re.value}u") } }
+                    italic { append(" (${nf1dp.format(re.valueAfterDecay())}u)") }
                     append(" bolus")
                 }
             }
@@ -177,7 +186,7 @@ class DisplayFragment : Fragment() {
                 text.text = buildSpannedString {
                     italic { append(re.minsAgoString()) }
                     append(" -- ")
-                    bold { color(ResourcesCompat.getColor(requireContext().resources, R.color.teal_700, null)) { append("${re.value}g")}}
+                    bold { color(ResourcesCompat.getColor(requireContext().resources, R.color.teal_700, null)) { append("${re.value}g") } }
                     append(" carbs")
                 }
             }

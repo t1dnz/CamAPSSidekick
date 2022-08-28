@@ -5,7 +5,9 @@ import android.util.Log
 import androidx.lifecycle.LifecycleCoroutineScope
 import androidx.preference.PreferenceManager
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
@@ -25,6 +27,8 @@ class DiasendPoller @Inject constructor(
     private var TAG = "DiasendPoller"
     val prefs = PreferenceManager.getDefaultSharedPreferences(context)
 
+    var scope = MainScope()
+
     private var poller: Job? = null
     private var updater: Job? = null
     private var from: LocalDateTime? = null
@@ -34,8 +38,9 @@ class DiasendPoller @Inject constructor(
         3. fetch more recent data every 5 minutes
      */
 
-    fun start_diasend_poller(scope: LifecycleCoroutineScope) {
+    fun start_diasend_poller() {
         // poll diasend 5 mins
+
         Log.d(TAG, "Poller starting")
 
         if (from == null) {
@@ -50,25 +55,13 @@ class DiasendPoller @Inject constructor(
         if (poller == null) {
             poller = scope.launch {
                 while (isActive) {
-                    if (!prefs.getBoolean("diasend_enable", false)) {
+                    if (!diasendEnabled()) {
                         Log.d(TAG, "Skipping loop Diasend not enabled")
                         delay(1 * 60 * 1000) // wait a minute
                         continue
                     }
 
-                    try {
-                        Log.d(TAG, "Fetch data from diasend now=${LocalDateTime.now()} from=$from")
-                        var patientData = diasendClient.getPatientData(
-                            from!!,
-                            LocalDateTime.now()
-                        )
-                        Log.d(TAG, "Returning list of data ${patientData?.size}")
-                        ddr.addPatientData(patientData)
-                        // change from to be to 30 mins ago
-                        from = LocalDateTime.now().minusMinutes(30)
-                    } catch (e: Throwable) {
-                        Log.e(TAG, "Error", e)
-                    }
+                    fetchAndPopulateData()
 
                     var waitTime: Long = 300  // 5 mins
                     if (ddr.bglReadings.size > 0) {
@@ -79,6 +72,7 @@ class DiasendPoller @Inject constructor(
                     waitTime += 30 // Add 15 seconds to give time to sync up
                     Log.d(TAG, "WAITING $waitTime seconds until calling diasend again")
                     delay(waitTime * 1000)
+
                 }
             }
         }
@@ -92,6 +86,37 @@ class DiasendPoller @Inject constructor(
             }
         }
 
+    }
+
+
+    fun fetchData() : Job {
+        return scope.launch {
+            fetchAndPopulateData()
+        }
+    }
+
+    suspend fun fetchAndPopulateData() {
+        if (!diasendEnabled()) {
+            return
+        }
+
+        try {
+            Log.d(TAG, "Fetch data from diasend now=${LocalDateTime.now()} from=$from")
+            var patientData = diasendClient.getPatientData(
+                from!!,
+                LocalDateTime.now()
+            )
+            Log.d(TAG, "Returning list of data ${patientData?.size}")
+            ddr.addPatientData(patientData)
+            // change from to be to 30 mins ago
+            from = LocalDateTime.now().minusMinutes(30)
+        } catch (e: Throwable) {
+            Log.e(TAG, "Error", e)
+        }
+    }
+
+    fun diasendEnabled(): Boolean {
+        return prefs.getBoolean("diasend_enable", false)
     }
 
     fun stop_diasend_poller() {
