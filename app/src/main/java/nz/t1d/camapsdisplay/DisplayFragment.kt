@@ -1,7 +1,9 @@
 package nz.t1d.camapsdisplay
 
+import android.content.res.Resources
 import android.os.Bundle
-import android.text.format.DateUtils
+import android.text.SpannableStringBuilder
+import android.util.TypedValue
 import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.Menu
@@ -9,12 +11,15 @@ import android.view.MenuInflater
 import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Chronometer
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.RelativeLayout
 import android.widget.TextView
 import androidx.core.content.res.ResourcesCompat
+import androidx.core.text.bold
+import androidx.core.text.buildSpannedString
+import androidx.core.text.color
+import androidx.core.text.italic
 import androidx.core.view.MenuHost
 import androidx.core.view.MenuProvider
 import androidx.core.view.setMargins
@@ -24,13 +29,11 @@ import androidx.navigation.fragment.findNavController
 import dagger.hilt.android.AndroidEntryPoint
 import nz.t1d.camapsdisplay.databinding.FragmentDisplayBinding
 import nz.t1d.di.BGLReading
-import nz.t1d.di.BasalInsulinChange
 import nz.t1d.di.BaseDataClass
 import nz.t1d.di.BolusInsulin
 import nz.t1d.di.CarbIntake
 import nz.t1d.di.DisplayDataRepository
 import java.text.NumberFormat
-import java.time.ZoneOffset
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -60,12 +63,6 @@ class DisplayFragment : Fragment() {
         nf1dp.maximumFractionDigits = 1
         nf0dp.maximumFractionDigits = 0
 
-        // sets up the minutes ago text field
-
-        binding.bglTime.start()
-        binding.bglTime.setOnChronometerTickListener { chrono ->
-            chrono.text = DateUtils.getRelativeTimeSpanString(chrono.base)
-        }
 
         // Setup the actions on the menu when the fragment is open
         val menuHost: MenuHost = requireActivity()
@@ -96,96 +93,117 @@ class DisplayFragment : Fragment() {
 
 
     fun updateValues() {
-        binding.bglImage.setImageDrawable(ddr.bglDirectionImage)
-        binding.bglReading.text = ddr.bglReading.toString()
-        binding.bglUnits.text = ddr.bglUnit
-        binding.bglTime.base = ddr.bglReadingTime
-        binding.bglDiff.text = ddr.bglDiff
+        if (ddr.bglReadings.size > 0) {
+            val first = ddr.bglReadings.first()
+            val imageID = first.directionImageId()
+            if (imageID != null) {
+                binding.bglImage.setImageDrawable(ResourcesCompat.getDrawable(requireContext().resources, imageID, null))
+            }
+
+            binding.bglReading.text = first.value.toString()
+            binding.bglUnits.text = first.bglUnit
+            binding.bglTime.text = first.minsAgoString()
+            binding.bglDiff.text = first.diffString()
+        }
 
         // diasend values
-
-
         binding.iobbolustv.text = "${nf1dp.format(ddr.insulinOnBoardBolus)}u"
         binding.iobbasaltv.text = "${nf1dp.format(ddr.insulinOnBoardBasal)}u"
-        binding.TIRtv.text = "${nf0dp.format(ddr.timeInRange*100)}%"
+        binding.TIRtv.text = "${nf0dp.format(ddr.timeInRange * 100)}%"
         binding.basaltv.text = "${nf2dp.format(ddr.insulinCurrentBasal)}u"
         binding.meanstdtv.text = "${nf1dp.format(ddr.meanBGL)}/${nf1dp.format(ddr.stdBGL)}"
 
         // Build the list of recent events
         binding.recentEventRows.removeAllViews()
-        for( re in ddr.recentEvents) {
+        for (re in ddr.recentEvents) {
             binding.recentEventRows.addView(createRecentEventRow(re))
         }
         binding.recentBglRows.removeAllViews()
-        for( re in ddr.bglReadings.take(10)) {
+        for (re in ddr.bglReadings.take(5)) {
             binding.recentBglRows.addView(createRecentEventRow(re))
         }
     }
 
     private fun createRecentEventRow(re: BaseDataClass): View {
 
-        val row =  LinearLayout(context)
+        val row = LinearLayout(context)
         row.orientation = LinearLayout.HORIZONTAL
         row.gravity = Gravity.CENTER_VERTICAL
         val layoutParams = RelativeLayout.LayoutParams(
             RelativeLayout.LayoutParams.MATCH_PARENT, RelativeLayout.LayoutParams.MATCH_PARENT
         )
-        layoutParams.setMargins(20)
+        layoutParams.setMargins(5)
         row.layoutParams = layoutParams
 
-        val lps = { -> val lp = RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.WRAP_CONTENT, RelativeLayout.LayoutParams.WRAP_CONTENT);
-            lp.setMargins(10,3,3,3)
+        val lps = { ->
+            val lp = RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.WRAP_CONTENT, RelativeLayout.LayoutParams.WRAP_CONTENT);
+            lp.setMargins(10, 1, 3, 0)
             lp
         }
         val image = ImageView(context)
         val text = TextView(context)
 
-        image.layoutParams = RelativeLayout.LayoutParams(50, 50)
+        // from https://stackoverflow.com/questions/4605527/converting-pixels-to-dp
+        val dip = 25f
+        val r: Resources = resources
+        val px = TypedValue.applyDimension(
+            TypedValue.COMPLEX_UNIT_DIP,
+            dip,
+            r.displayMetrics
+        )
+
+        image.layoutParams = RelativeLayout.LayoutParams(px.toInt(), px.toInt())
+
         text.layoutParams = lps()
 
-        val dBasal = ResourcesCompat.getDrawable(requireContext().resources, R.drawable.ic_basal, null)
         val dBolus = ResourcesCompat.getDrawable(requireContext().resources, R.drawable.ic_bolus, null)
-        val dBGL = ResourcesCompat.getDrawable(requireContext().resources, R.drawable.ic_bgl, null)
+
         val dCarb = ResourcesCompat.getDrawable(requireContext().resources, R.drawable.ic_carb, null)
 
+
         when (re) {
-            is BolusInsulin -> {image.setImageDrawable(dBolus); text.text = "${re.value}u (${nf1dp.format(re.valueAfterDecay())}u) bolus -- ${re.minsAgoString()}"}
-            is CarbIntake -> {image.setImageDrawable(dCarb); text.text = "${re.value}g carbs -- ${re.minsAgoString()}"}
-            is BGLReading -> {image.setImageDrawable(dBGL); text.text = "${re.minsAgoString()} -- ${re.value}mmol/L"}
+            is BolusInsulin -> {
+                image.setImageDrawable(dBolus)
+                text.text = buildSpannedString {
+                    italic { append(re.minsAgoString()) }
+                    append(" -- ")
+                    bold { color(ResourcesCompat.getColor(requireContext().resources, R.color.teal_700, null)) { append("${re.value}u")}}
+                    italic { append(" (${nf1dp.format(re.valueAfterDecay())}u)")}
+                    append(" bolus")
+                }
+            }
+            is CarbIntake -> {
+                image.setImageDrawable(dCarb)
+                text.text = buildSpannedString {
+                    italic { append(re.minsAgoString()) }
+                    append(" -- ")
+                    bold { color(ResourcesCompat.getColor(requireContext().resources, R.color.teal_700, null)) { append("${re.value}g")}}
+                    append(" carbs")
+                }
+            }
+            is BGLReading -> {
+                if (re.directionImageId() != null) {
+                    image.setImageDrawable(ResourcesCompat.getDrawable(requireContext().resources, re.directionImageId()!!, null))
+                }
+                text.text = buildSpannedString {
+                    italic { append(re.minsAgoString()) }
+                    append(" -- ")
+                    bold { color(ResourcesCompat.getColor(requireContext().resources, R.color.teal_700, null)) { append("${re.value}mmol/L ") } }
+                    italic { append("(${re.diffString(false)})") }
+                }
+            }
         }
 
+        text.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 20f)
         row.addView(image)
         row.addView(text)
 
         return row
-//        <LinearLayout
-//        android:layout_width="match_parent"
-//        android:layout_height="match_parent"
-//        android:orientation="horizontal"
-//        android:gravity="left"
-//        android:layout_margin="5dp"
-//        android:layout_gravity="center_vertical">
-//
-//        <ImageView
-//        android:id="@+id/imageView"
-//        android:layout_width="wrap_content"
-//        android:layout_height="20dp"
-//
-//        android:layout_weight="0"
-//        android:src="@drawable/ic_bolus_24dp" />
-//
-//        <TextView
-//        android:id="@+id/textView"
-//        android:layout_width="wrap_content"
-//        android:layout_height="wrap_content"
-//        android:layout_weight="1"
-//        android:textSize="14sp"
-//        android:text="" />
-//        </LinearLayout>
+
     }
+
     override fun onDestroyView() {
         super.onDestroyView()
-        binding.bglTime.stop()
         ddr.listeners.remove(ddrListener) // must remove listener to stop null binding
         _binding = null
     }

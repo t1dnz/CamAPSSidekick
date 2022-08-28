@@ -12,9 +12,9 @@
     <LinearLayout
         android:id="@+id/readinglayout"
         android:layout_width="fill_parent"
-        android:layout_height="0dp"
+        android:layout_height="wrap_content"
         android:layout_margin="10dp"
-        android:layout_weight="1"
+
         android:orientation="horizontal"
         tools:layout_editor_absoluteX="1dp"
         tools:layout_editor_absoluteY="1dp">
@@ -33,7 +33,7 @@
                 android:gravity="center"
                 android:orientation="vertical">
 
-                <Chronometer
+                <TextView
                     android:id="@+id/bgl_time"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -223,9 +223,9 @@
         android:background="?android:attr/listDivider" />
 
     <LinearLayout
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_weight=".8"
+        android:layout_width="fill_parent"
+        android:layout_height="0dp"
+        android:layout_weight=".3"
         android:orientation="horizontal">
 
         <ScrollView
@@ -252,7 +252,7 @@
         android:id="@+id/graphlayout"
         android:layout_width="fill_parent"
         android:layout_height="0dp"
-        android:layout_weight=".8"
+        android:layout_weight=".3"
         android:orientation="horizontal"
 
         >

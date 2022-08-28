@@ -4,13 +4,19 @@
     <option name="filePathToZoomLevelMap">
       <map>
         <entry key="app/src/main/res/drawable-v24/ic_launcher_foreground.xml" value="0.267" />
+        <entry key="app/src/main/res/drawable/ic_basal.xml" value="0.325" />
         <entry key="app/src/main/res/drawable/ic_basal_24dp.xml" value="0.301" />
         <entry key="app/src/main/res/drawable/ic_bgl_24dp.xml" value="0.301" />
         <entry key="app/src/main/res/drawable/ic_bolus_24dp.xml" value="0.301" />
         <entry key="app/src/main/res/drawable/ic_carb.xml" value="0.301" />
         <entry key="app/src/main/res/drawable/ic_carb_24dp.xml" value="0.301" />
+        <entry key="app/src/main/res/drawable/ic_down_arrow.xml" value="0.248" />
+        <entry key="app/src/main/res/drawable/ic_downish_arrow.xml" value="0.248" />
         <entry key="app/src/main/res/drawable/ic_launcher_background.xml" value="0.267" />
         <entry key="app/src/main/res/drawable/ic_menu_24dp.xml" value="0.257" />
+        <entry key="app/src/main/res/drawable/ic_side_arrow.xml" value="0.248" />
+        <entry key="app/src/main/res/drawable/ic_up_arrow.xml" value="0.248" />
+        <entry key="app/src/main/res/drawable/ic_upish_arrow.xml" value="0.248" />
         <entry key="app/src/main/res/layout/activity_main.xml" value="0.5" />
         <entry key="app/src/main/res/layout/content_main.xml" value="0.458786231884058" />
         <entry key="app/src/main/res/layout/fragment_diasend.xml" value="0.33" />

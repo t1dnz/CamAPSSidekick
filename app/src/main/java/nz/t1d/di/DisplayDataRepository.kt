@@ -1,10 +1,10 @@
 package nz.t1d.di
 
 import android.content.Context
-import android.graphics.drawable.Drawable
 import android.util.Log
 import androidx.preference.PreferenceManager
 import dagger.hilt.android.qualifiers.ApplicationContext
+import nz.t1d.camapsdisplay.R
 import nz.t1d.diasend.DiasendDatum
 import java.text.DecimalFormat
 import java.time.Duration
@@ -15,9 +15,6 @@ import java.time.ZoneId
 import java.util.*
 import javax.inject.Inject
 import javax.inject.Singleton
-import kotlin.math.atan
-import kotlin.math.pow
-import kotlin.math.sqrt
 import kotlin.math.truncate
 
 
@@ -26,7 +23,7 @@ interface BaseDataClass {
     var value: Float
 
     fun secondsAgo(): Long {
-        return Duration.between(time, LocalDateTime.now()).toSeconds()
+        return Duration.between(time, LocalDateTime.now()).toMillis() / 1000L // toSeconds not supported yet
     }
 
 
@@ -74,21 +71,21 @@ data class BolusInsulin(
 
         // percent of insulin used is 100 so we make a triangle whose area is 100
         // 1/2 w * h  = 100, w = dia, solve for h. so h = (100*2)/dia
-        val height = 200f/dia // for 180 it is about 1.11
+        val height = 200f / dia // for 180 it is about 1.11
 
         // Now we can divide that into two right angle triangels, first the one going to peak the second coming down
         // Because it is linear up and linear down all we need to know is the interior angles of the two triangles to find the area
-        val areaOfFirstTrialngle = (peak*height)/2 // 1/2 * w * h
-        val areaOfSecondTrialngle = ((dia-peak)*height)/2 // 1/2 * w * h
+        val areaOfFirstTrialngle = (peak * height) / 2 // 1/2 * w * h
+        val areaOfSecondTrialngle = ((dia - peak) * height) / 2 // 1/2 * w * h
 
-        val slopeFirstTriangle = height/peak
-        val slopeSecondTriangle = height/(dia-peak)
+        val slopeFirstTriangle = height / peak
+        val slopeSecondTriangle = height / (dia - peak)
 
 
         var percentOfInsulinUsed = 0f
         var pastPeak = false
         var triangleArea = 0f
-        if ( minsAgo < peak) {
+        if (minsAgo < peak) {
             pastPeak = false
             triangleArea = areaOfTriangleFromSlope(slopeFirstTriangle, minsAgo)
             percentOfInsulinUsed = triangleArea
@@ -102,13 +99,13 @@ data class BolusInsulin(
             percentOfInsulinUsed = areaOfFirstTrialngle + (areaOfSecondTrialngle - triangleArea)
         }
 
-        val ret = (1 - (percentOfInsulinUsed/100)) * value
+        val ret = (1 - (percentOfInsulinUsed / 100)) * value
         return ret
     }
 
     private fun areaOfTriangleFromSlope(slope: Float, width: Float): Float {
         val height = slope * width
-        return  (height*width)/2f
+        return (height * width) / 2f
     }
 }
 
@@ -118,10 +115,64 @@ data class CarbIntake(
     var decay: Float,
 ) : BaseDataClass
 
+
 data class BGLReading(
     override var value: Float,
     override var time: LocalDateTime,
-) : BaseDataClass
+    var source: String,
+    var bglUnit: String = "mmol/L",
+    var diff: Float = 0f,
+) : BaseDataClass {
+    private val TAG = "BGLReading"
+    fun calculateDiff(olderReading: BGLReading): Float? {
+        if (this == olderReading) {
+            Log.d(TAG, "exiting Same reading")
+            return null
+        }
+        if (olderReading.time >= time) {
+            Log.d(TAG, "exiting not older")
+            return null
+        }
+
+        val duration = Duration.between(olderReading.time, time).toMillis() / 1000
+        if (duration < 290) {
+            Log.d(TAG, "duration $duration not older")
+            return null
+        }
+        // Calculate rate per min then multiply by 5
+        val rate = (value - olderReading.value) / duration
+        return rate * 300
+    }
+
+    fun diffString(unit: Boolean = true): String {
+        val dec = DecimalFormat("+#,##0.0;-#")
+        if (unit) {
+            return "${dec.format(diff)} $bglUnit"
+        }
+        return dec.format(diff)
+    }
+
+    fun directionImageId(): Int? {
+        if (diff == null) {
+            return null
+        }
+        when {
+            diff < -1 -> {
+                return R.drawable.ic_down_arrow
+            }
+            diff < -0.2 -> {
+                return R.drawable.ic_downish_arrow
+            }
+            diff > 1 -> {
+                return R.drawable.ic_up_arrow
+            }
+            diff > 0.2 -> {
+                return R.drawable.ic_upish_arrow
+            }
+        }
+        return R.drawable.ic_side_arrow
+    }
+}
 
 
 object dataComparitor : Comparator<BaseDataClass> {
@@ -142,18 +193,6 @@ class DisplayDataRepository @Inject constructor(@ApplicationContext context: Con
     var insulinPeak = prefs.getString("insulin_peak", "0.0")!!.toFloat()
 
     private val TAG = "DisplayDataRepository"
-
-    //
-    private var previousBGLReading: Float = 0f
-    private var previousBGLReadingTime: Long = 0
-
-    // Data to be accessed
-    var bglReading: Float = 0f
-    var bglDiff: String = ""
-    var bglReadingTime: Long = 0
-    var bglDirectionImage: Drawable? = null
-    var bglUnit: String = "mmol/L"
-
 
     // insulin
     var insulinOnBoard: Float = 0f
@@ -184,15 +223,8 @@ class DisplayDataRepository @Inject constructor(@ApplicationContext context: Con
 
     fun newNotificationAvailable(nd: NotificationData) {
         // store previoud data
-        previousBGLReading = bglReading
-        previousBGLReadingTime = bglReadingTime
-
-        // update current readings
-        bglReading = nd.reading
-        bglReadingTime = nd.time
-        bglUnit = nd.unit
-        bglDirectionImage = nd.image_drawable
-        bglDiff = calculateDiff()
+        bglReadings.add(BGLReading(nd.reading, nd.time, "notif", nd.unit, 0f))
+        processBGLReadings()
 
         // Update listeners something has changes
         updatedListeners()
@@ -200,14 +232,6 @@ class DisplayDataRepository @Inject constructor(@ApplicationContext context: Con
 
     fun updatedListeners() {
         listeners.forEach { it() }
-    }
-
-    fun calculateDiff(): String {
-        val dec = DecimalFormat("+#,##0.0;-#")
-        val readingDiff = bglReading - previousBGLReading
-        val fiveMinutes = (bglReadingTime - previousBGLReadingTime) / (60000.0 * 5.0)
-        val diff = readingDiff / fiveMinutes
-        return "${dec.format(diff)} $bglUnit"
     }
 
 
@@ -225,7 +249,8 @@ class DisplayDataRepository @Inject constructor(@ApplicationContext context: Con
         // Some useful dates
         val now = LocalDateTime.now()
         val midnight = LocalDateTime.of(LocalDate.now(), LocalTime.MIDNIGHT)
-        val insulinDurationTime = now.minusMinutes((insulinDuration * 1.5).toLong())
+        val insulinDurationTime = now.minusMinutes((insulinDuration * 1.2).toLong())
+        val carbDurationTime = now.minusMinutes((120).toLong())
         val midnightMinus = midnight.minusMinutes((insulinDuration * 1.5).toLong())
 
         // extract all the types
@@ -242,7 +267,7 @@ class DisplayDataRepository @Inject constructor(@ApplicationContext context: Con
                     insulinBasalChanges.add(BasalInsulinChange(d.value, ld))
                 }
                 "glucose" -> {
-                    bglReadings.add(BGLReading(d.value, ld))
+                    bglReadings.add(BGLReading(d.value, ld, "diasend"))
                 }
                 else -> {
                     Log.d(TAG, "UNKNOWN DIASEND TYPE ${d.type}")
@@ -258,7 +283,9 @@ class DisplayDataRepository @Inject constructor(@ApplicationContext context: Con
 
         // Take the basal changes and calculate the equivilant boluses
         processBasalChanges(midnightMinus)
+        processBGLReadings()
 
+        // TODO process and join bolus and carbs into a single item
 
         // end of compression
 
@@ -280,6 +307,7 @@ class DisplayDataRepository @Inject constructor(@ApplicationContext context: Con
 
 
         // BOLUSES
+        recentEvents.add(insulinBoluses.first()) // always add last bolus
         for (d in insulinBoluses) {
             if (d.time > midnight) {
                 insulinBolusTotal += d.value
@@ -309,8 +337,9 @@ class DisplayDataRepository @Inject constructor(@ApplicationContext context: Con
 
 
         // CARBS
+        recentEvents.add(carbs.first()) // always add last Carb
         for (d in carbs) {
-            if (d.time > insulinDurationTime) {
+            if (d.time > carbDurationTime) {
                 recentEvents.add(d)
             }
         }
@@ -338,17 +367,29 @@ class DisplayDataRepository @Inject constructor(@ApplicationContext context: Con
         }
         stdBGL = Math.sqrt((tmpSTD / todayTotalReadings).toDouble()).toFloat()
 
-        // OVERRIDES OF THE NOTIF DATA
-        if (bglReadings.size > 0 && bglReading == 0f) {
-            val first = bglReadings.first()
-            bglReading = first.value
-            bglReadingTime = first.time.atZone(ZoneId.systemDefault()).toEpochSecond() * 1000
-        }
-
         // update
         updatedListeners()
     }
 
+
+    private fun processBGLReadings() {
+        // Because we are getting readings from notifications AND Diasend which will have slightly different time values
+        // This will
+
+        val bglList = bglReadings.toList()
+        for (i in bglList.indices) {
+            val d1 = bglList[i]
+            // Find next value that will return a diff
+            for (j in (i + 1)..(bglList.size - 1)) {
+                val d2 = bglList[j]
+                val diff = d1.calculateDiff(d2)
+                if (diff != null) {
+                    d1.diff = diff
+                    break
+                }
+            }
+        }
+    }
 
     private fun processBasalChanges(midnightMinus: LocalDateTime) {
         // Compress Basal Changes (there are a ton of useless ones)

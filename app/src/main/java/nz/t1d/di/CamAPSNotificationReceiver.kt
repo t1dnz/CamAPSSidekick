@@ -13,13 +13,15 @@ import android.widget.TextView
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.time.Instant
+import java.time.LocalDateTime
+import java.time.temporal.ChronoUnit
 import javax.inject.Inject
 import javax.inject.Singleton
 
 data class NotificationData(
     var reading: Float,
     var unit: String,
-    var time: Long,
+    var time: LocalDateTime,
     var image_drawable: Drawable?
 )
 
@@ -61,7 +63,7 @@ class CamAPSNotificationReceiver @Inject constructor(
     // modified from xdrip
     private fun processView(view: View?): NotificationData {
         // recursivly loop through all children looking for info
-        val nd = NotificationData(0.0f, "mmol/L", Instant.now().toEpochMilli(), null)
+        val nd = NotificationData(0.0f, "mmol/L", LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES), null)
         if (view != null) {
             getTextViews(nd, view.rootView as ViewGroup)
         }
