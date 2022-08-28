@@ -66,6 +66,7 @@ class DisplayFragment : Fragment() {
 
         nf2dp.maximumFractionDigits = 2
         nf1dp.maximumFractionDigits = 1
+        nf1dp.minimumFractionDigits = 1
         nf0dp.maximumFractionDigits = 0
 
         binding.swiperefresh.setOnRefreshListener {
