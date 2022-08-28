@@ -307,7 +307,7 @@ class DisplayDataRepository @Inject constructor(@ApplicationContext context: Con
 
 
         // BOLUSES
-        recentEvents.add(insulinBoluses.first()) // always add last bolus
+        if (!insulinBoluses.isEmpty()) recentEvents.add(insulinBoluses.first()) // always add last bolus
         for (d in insulinBoluses) {
             if (d.time > midnight) {
                 insulinBolusTotal += d.value
@@ -337,7 +337,7 @@ class DisplayDataRepository @Inject constructor(@ApplicationContext context: Con
 
 
         // CARBS
-        recentEvents.add(carbs.first()) // always add last Carb
+        if(!carbs.isEmpty()) recentEvents.add(carbs.first()) // always add last Carb
         for (d in carbs) {
             if (d.time > carbDurationTime) {
                 recentEvents.add(d)
@@ -392,6 +392,9 @@ class DisplayDataRepository @Inject constructor(@ApplicationContext context: Con
     }
 
     private fun processBasalChanges(midnightMinus: LocalDateTime) {
+        if (insulinBasalChanges.isEmpty()) {
+            return
+        }
         // Compress Basal Changes (there are a ton of useless ones)
         var previousMinsAgo: Long = -1
         var previousValue: Float = -1f
