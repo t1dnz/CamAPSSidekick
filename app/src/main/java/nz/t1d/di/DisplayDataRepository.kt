@@ -116,35 +116,48 @@ data class CarbIntake(
 ) : BaseDataClass
 
 
+enum class DATA_SOURCE{CAMAPS_NOTIF, DIASEND}
+
 data class BGLReading(
     override var value: Float,
     override var time: LocalDateTime,
-    var source: String,
     var bglUnit: String = "mmol/L",
-    var diff: Float = 0f,
 ) : BaseDataClass {
     private val TAG = "BGLReading"
-    fun calculateDiff(olderReading: BGLReading): Float? {
-        if (this == olderReading) {
-            Log.d(TAG, "exiting Same reading")
-            return null
+    var source: DATA_SOURCE = DATA_SOURCE.DIASEND
+
+    // reference to previous reading making this kind of a
+    var previousReading: BGLReading? = null
+
+    fun calculateDiff(): Float {
+        previousReading?.let { pr ->
+            val duration = Duration.between(pr.time, time).toMillis() / 1000
+            // Calculate rate per min then multiply by 5
+            val rate = (value - pr.value) / duration
+            return rate * 300
         }
-        if (olderReading.time >= time) {
-            Log.d(TAG, "exiting not older")
-            return null
+        return 0f
+    }
+
+
+    // Return the BGL reading we trust more to be correct
+    fun lessTruthy(that: BGLReading) : BGLReading {
+        if (source == DATA_SOURCE.DIASEND) {
+            return that
+        }
+        if (that.source == DATA_SOURCE.DIASEND) {
+            return this
         }
 
-        val duration = Duration.between(olderReading.time, time).toMillis() / 1000
-        if (duration < 290) {
-            Log.d(TAG, "duration $duration not older")
-            return null
+        // At this point they must both be notifs so we just return the older one
+        if (time > that.time) {
+            return this
         }
-        // Calculate rate per min then multiply by 5
-        val rate = (value - olderReading.value) / duration
-        return rate * 300
+        return that
     }
 
     fun diffString(unit: Boolean = true): String {
+        var  diff = calculateDiff()
         val dec = DecimalFormat("+#,##0.0;-#")
         if (unit) {
             return "${dec.format(diff)} $bglUnit"
@@ -153,6 +166,7 @@ data class BGLReading(
     }
 
     fun directionImageId(): Int? {
+        var  diff = calculateDiff()
         if (diff == null) {
             return null
         }
@@ -223,7 +237,9 @@ class DisplayDataRepository @Inject constructor(@ApplicationContext context: Con
 
     fun newNotificationAvailable(nd: NotificationData) {
         // store previoud data
-        bglReadings.add(BGLReading(nd.reading, nd.time, "notif", nd.unit, 0f))
+        val reading = BGLReading(nd.reading, nd.time, nd.unit)
+        reading.source = DATA_SOURCE.CAMAPS_NOTIF
+        bglReadings.add(reading)
         processBGLReadings()
 
         // Update listeners something has changes
@@ -267,7 +283,7 @@ class DisplayDataRepository @Inject constructor(@ApplicationContext context: Con
                     insulinBasalChanges.add(BasalInsulinChange(d.value, ld))
                 }
                 "glucose" -> {
-                    bglReadings.add(BGLReading(d.value, ld, "diasend"))
+                    bglReadings.add(BGLReading(d.value, ld))
                 }
                 else -> {
                     Log.d(TAG, "UNKNOWN DIASEND TYPE ${d.type}")
@@ -373,21 +389,40 @@ class DisplayDataRepository @Inject constructor(@ApplicationContext context: Con
 
 
     private fun processBGLReadings() {
-        // Because we are getting readings from notifications AND Diasend which will have slightly different time values
-        // This will
+        // Because we can get notifications from multiple locations we can have ver similar duplicates
+        // we remove all readings if they are within 1 minute of each other
+        // keeping the diasend reading as priority because it is more truthy
 
         val bglList = bglReadings.toList()
         for (i in bglList.indices) {
             val d1 = bglList[i]
+
+            // already been removed, skip
+            if (!bglReadings.contains(d1)) {
+                continue
+            }
+
             // Find next value that will return a diff
             for (j in (i + 1)..(bglList.size - 1)) {
                 val d2 = bglList[j]
-                val diff = d1.calculateDiff(d2)
-                if (diff != null) {
-                    d1.diff = diff
-                    break
+
+                val secondsDuration = Duration.between(d2.time, d1.time).toMillis() / 1000
+                // if the difference in time between readings is less than 60 seconds
+                if (secondsDuration < 60) {
+                    var notTruthy = d1.lessTruthy(d2)
+                    bglReadings.remove(notTruthy)
+                    continue
                 }
             }
+        }
+
+        // assign the previous reading to each of the bglreadings so they can self calculate diff and such
+        var futureReading: BGLReading? = null
+        for (d in bglReadings) {
+            if (futureReading != null) {
+                futureReading.previousReading = d
+            }
+            futureReading = d
         }
     }
 

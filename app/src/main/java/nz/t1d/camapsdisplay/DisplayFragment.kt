@@ -117,8 +117,7 @@ class DisplayFragment : Fragment() {
         }
 
         // diasend values
-        binding.iobbolustv.text = "${nf1dp.format(ddr.insulinOnBoardBolus)}u"
-        binding.iobbasaltv.text = "${nf1dp.format(ddr.insulinOnBoardBasal)}u"
+        binding.iobtv.text = "${nf1dp.format(ddr.insulinOnBoardBolus)}/${nf1dp.format(ddr.insulinOnBoardBasal)}u"
         binding.TIRtv.text = "${nf0dp.format(ddr.timeInRange * 100)}%"
         binding.basaltv.text = "${nf2dp.format(ddr.insulinCurrentBasal)}u"
         binding.meanstdtv.text = "${nf1dp.format(ddr.meanBGL)}/${nf1dp.format(ddr.stdBGL)}"
@@ -129,13 +128,12 @@ class DisplayFragment : Fragment() {
             binding.recentEventRows.addView(createRecentEventRow(re))
         }
         binding.recentBglRows.removeAllViews()
-        for (re in ddr.bglReadings.take(5)) {
+        for (re in ddr.bglReadings.take(6)) {
             binding.recentBglRows.addView(createRecentEventRow(re))
         }
     }
 
     private fun createRecentEventRow(re: BaseDataClass): View {
-
         val row = LinearLayout(context)
         row.orientation = LinearLayout.HORIZONTAL
         row.gravity = Gravity.CENTER_VERTICAL

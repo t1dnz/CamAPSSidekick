@@ -84,6 +84,7 @@ curl -vv -L --request GET 'https://api.diasend.com/1/patient/data?type=combined&
 ]
 */
 
+
 @Serializable
 data class AuthToken(
     @SerializedName("expires_in")
@@ -117,6 +118,8 @@ data class DiasendDatum(
     val unit: String,
     @SerializedName("flags")
     val flags: List<DiasendDatumFlag>,
+    @SerializedName("suggestion_based_on_carb")
+    val suggestionBasedOnCarb: String
 )
 
 interface Diasend {

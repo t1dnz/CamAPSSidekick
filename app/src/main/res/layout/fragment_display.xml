@@ -121,41 +121,18 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="IOB (Bolus)"
+                    android:text="IOB (Bolus/Basal)"
                     android:textColor="@color/teal_700"
                     android:textSize="10sp" />
 
                 <TextView
-                    android:id="@+id/iobbolustv"
+                    android:id="@+id/iobtv"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="00.0u"
                     android:textSize="20sp"
                     android:textStyle="bold" />
             </LinearLayout>
-
-            <LinearLayout
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_margin="10dp"
-                android:orientation="vertical">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="IOB (Basal)"
-                    android:textColor="@color/teal_700"
-                    android:textSize="10sp" />
-
-                <TextView
-                    android:id="@+id/iobbasaltv"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="00.0u"
-                    android:textSize="20sp"
-                    android:textStyle="bold" />
-            </LinearLayout>
-
 
             <LinearLayout
                 android:layout_width="wrap_content"
