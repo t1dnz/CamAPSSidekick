@@ -16,6 +16,7 @@ import java.util.*
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlin.math.truncate
+import kotlin.reflect.KClass
 
 
 interface BaseDataClass {
@@ -56,6 +57,10 @@ data class BolusInsulin(
     var dia: Float,
 ) : BaseDataClass {
     private val TAG = "BolusInsulin"
+
+    // The carb intake that is associated with this bolus
+    var carbIntake: CarbIntake? = null
+
     fun valueAfterDecay(): Float {
         // This is taken from the Bilinear algorithm here https://openaps.readthedocs.io/en/latest/docs/While%20You%20Wait%20For%20Gear/understanding-insulin-on-board-calculations.html
         // actual code here https://github.com/openaps/oref0/blob/88cf032aa74ff25f69464a7d9cd601ee3940c0b3/lib/iob/calculate.js#L36
@@ -300,7 +305,7 @@ class DisplayDataRepository @Inject constructor(@ApplicationContext context: Con
         // Take the basal changes and calculate the equivilant boluses
         processBasalChanges(midnightMinus)
         processBGLReadings()
-
+        joinTogetherBolusInfo()
         // TODO process and join bolus and carbs into a single item
 
         // end of compression
@@ -478,6 +483,31 @@ class DisplayDataRepository @Inject constructor(@ApplicationContext context: Con
         }
     }
 
+    private fun joinTogetherBolusInfo() {
+        // We want to find events in a time range
+        // We want to join the boluses with carbs
+        for (bolus in insulinBoluses) {
+            val closeCarbs = findEvents(bolus.time, bolus.time.plusMinutes(2), carbs)
+            if (!closeCarbs.isEmpty()) {
+                bolus.carbIntake = closeCarbs.first()
+                carbs.remove(bolus.carbIntake)
+            }
+        }
+    }
+
+    private fun <T: BaseDataClass> findEvents(from: LocalDateTime, to: LocalDateTime, setOf : SortedSet<T>) : List<T>{
+        val list = mutableListOf<T>()
+        for (d in setOf) {
+            if (d.time < from) {
+                return list
+            }
+            if (d.time > to) {
+                continue
+            }
+            list.add(d)
+        }
+        return list
+    }
 }
 
 

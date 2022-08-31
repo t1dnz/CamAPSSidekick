@@ -1,6 +1,10 @@
 package nz.t1d.camapsdisplay
 
+import android.animation.ArgbEvaluator
+import android.animation.ObjectAnimator
+import android.animation.ValueAnimator
 import android.content.res.Resources
+import android.graphics.Color
 import android.os.Bundle
 import android.util.TypedValue
 import android.view.Gravity
@@ -14,6 +18,7 @@ import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.RelativeLayout
 import android.widget.TextView
+import androidx.core.content.ContextCompat
 import androidx.core.content.res.ResourcesCompat
 import androidx.core.text.bold
 import androidx.core.text.buildSpannedString
@@ -65,8 +70,11 @@ class DisplayFragment : Fragment() {
         _binding = FragmentDisplayBinding.inflate(inflater, container, false)
 
         nf2dp.maximumFractionDigits = 2
+        nf2dp.minimumFractionDigits = 1
+
         nf1dp.maximumFractionDigits = 1
         nf1dp.minimumFractionDigits = 1
+
         nf0dp.maximumFractionDigits = 0
 
         binding.swiperefresh.setOnRefreshListener {
@@ -117,9 +125,9 @@ class DisplayFragment : Fragment() {
         }
 
         // diasend values
-        binding.iobtv.text = "${nf1dp.format(ddr.insulinOnBoardBolus)}/${nf1dp.format(ddr.insulinOnBoardBasal)}u"
+        binding.iobtv.text = "${nf1dp.format(ddr.insulinOnBoardBolus)}u/${nf1dp.format(ddr.insulinOnBoardBasal)}u"
         binding.TIRtv.text = "${nf0dp.format(ddr.timeInRange * 100)}%"
-        binding.basaltv.text = "${nf2dp.format(ddr.insulinCurrentBasal)}u"
+        binding.basaltv.text = "${nf2dp.format(ddr.insulinCurrentBasal)}u/h"
         binding.meanstdtv.text = "${nf1dp.format(ddr.meanBGL)}/${nf1dp.format(ddr.stdBGL)}"
 
         // Build the list of recent events
@@ -149,7 +157,8 @@ class DisplayFragment : Fragment() {
             lp
         }
         val image = ImageView(context)
-        val text = TextView(context)
+        val time = TextView(context)
+        val action = TextView(context)
 
         // from https://stackoverflow.com/questions/4605527/converting-pixels-to-dp
         val dip = 25f
@@ -162,7 +171,15 @@ class DisplayFragment : Fragment() {
 
         image.layoutParams = RelativeLayout.LayoutParams(px.toInt(), px.toInt())
 
-        text.layoutParams = lps()
+        time.layoutParams = lps()
+        time.text = buildSpannedString {
+            italic { append(re.minsAgoString()) }
+        }
+        time.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 20f)
+        time.setEms(5)
+
+        action.layoutParams = lps()
+        action.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 20f)
 
         val dBolus = ResourcesCompat.getDrawable(requireContext().resources, R.drawable.ic_bolus, null)
 
@@ -172,20 +189,23 @@ class DisplayFragment : Fragment() {
         when (re) {
             is BolusInsulin -> {
                 image.setImageDrawable(dBolus)
-                text.text = buildSpannedString {
-                    italic { append(re.minsAgoString()) }
-                    append(" -- ")
+                action.text = buildSpannedString {
                     bold { color(ResourcesCompat.getColor(requireContext().resources, R.color.teal_700, null)) { append("${re.value}u") } }
-                    italic { append(" (${nf1dp.format(re.valueAfterDecay())}u)") }
                     append(" bolus")
+                    val ci = re.carbIntake
+                    if (ci != null) {
+                        italic { append(" for ") }
+                        bold { color(ResourcesCompat.getColor(requireContext().resources, R.color.teal_700,null)) {  append("${nf0dp.format(ci.value)}g") } }
+                        append(" carbs")
+                    }
                 }
+
+
             }
             is CarbIntake -> {
                 image.setImageDrawable(dCarb)
-                text.text = buildSpannedString {
-                    italic { append(re.minsAgoString()) }
-                    append(" -- ")
-                    bold { color(ResourcesCompat.getColor(requireContext().resources, R.color.teal_700, null)) { append("${re.value}g") } }
+                action.text = buildSpannedString {
+                    bold { color(ResourcesCompat.getColor(requireContext().resources, R.color.teal_700, null)) { append("${nf0dp.format(re.value)}g") } }
                     append(" carbs")
                 }
             }
@@ -193,18 +213,27 @@ class DisplayFragment : Fragment() {
                 if (re.directionImageId() != null) {
                     image.setImageDrawable(ResourcesCompat.getDrawable(requireContext().resources, re.directionImageId()!!, null))
                 }
-                text.text = buildSpannedString {
-                    italic { append(re.minsAgoString()) }
-                    append(" -- ")
+                action.text = buildSpannedString {
                     bold { color(ResourcesCompat.getColor(requireContext().resources, R.color.teal_700, null)) { append("${re.value}mmol/L ") } }
                     italic { append("(${re.diffString(false)})") }
                 }
             }
         }
 
-        text.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 20f)
+
         row.addView(image)
-        row.addView(text)
+        row.addView(time)
+        row.addView(action)
+
+//        var ag = ObjectAnimator.ofObject(action, "backgroundColor", ArgbEvaluator(), ContextCompat.getColor(requireContext(), R.color.purple_200), ContextCompat.getColor(requireContext(), R.color.teal_200))
+//        ag.duration = 1000
+//        ag.start()
+
+//        var ag = ObjectAnimator.ofArgb(row, "backgroundColor", Color.BLACK, Color.RED)
+//        ag.duration = 2500
+//        ag.repeatCount = -1
+//        ag.repeatMode = ValueAnimator.REVERSE
+//        ag.start()
 
         return row
 

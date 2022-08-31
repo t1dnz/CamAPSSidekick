@@ -104,7 +104,7 @@ class DiasendPoller @Inject constructor(
             Log.d(TAG, "Fetch data from diasend now=${LocalDateTime.now()} from=$from")
             var patientData = diasendClient.getPatientData(
                 from!!,
-                LocalDateTime.now()
+                LocalDateTime.now().plusMinutes(10)
             )
             Log.d(TAG, "Returning list of data ${patientData?.size}")
             ddr.addPatientData(patientData)
