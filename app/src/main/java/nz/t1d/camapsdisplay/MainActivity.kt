@@ -6,8 +6,13 @@ import android.content.SharedPreferences
 import android.os.Bundle
 import android.provider.Settings
 import android.text.TextUtils
+import android.view.View
 import android.view.WindowManager
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.res.ResourcesCompat
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowInsetsControllerCompat
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.findNavController
 import androidx.navigation.ui.AppBarConfiguration
@@ -52,12 +57,15 @@ class MainActivity : AppCompatActivity(), SharedPreferences.OnSharedPreferenceCh
         // Setup Preferences
         val prefs = PreferenceManager.getDefaultSharedPreferences(applicationContext)
         setupDisplaySleep(prefs.getBoolean("display_sleep", false))
+        setupDisplayDark(prefs.getBoolean("display_dark", false))
         prefs.registerOnSharedPreferenceChangeListener(this)
 
         // initialize the camAPS notification receiver to start listening
         camAPSNotificationReceiver.listen()
         diasendPoller.start_diasend_poller()
     }
+
+
 
     override fun onDestroy() {
         super.onDestroy()
@@ -94,6 +102,7 @@ class MainActivity : AppCompatActivity(), SharedPreferences.OnSharedPreferenceCh
     override fun onSharedPreferenceChanged(sp: SharedPreferences, key: String) {
         when (key) {
             "display_sleep" -> setupDisplaySleep(sp.getBoolean(key, false))
+            "display_dark" -> setupDisplayDark(sp.getBoolean(key, false))
         }
     }
 
@@ -104,4 +113,22 @@ class MainActivity : AppCompatActivity(), SharedPreferences.OnSharedPreferenceCh
             window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         }
     }
+
+    private fun setupDisplayDark(displayDark: Boolean) {
+        // from https://stackoverflow.com/questions/62577645/android-view-view-systemuivisibility-deprecated-what-is-the-replacement
+        if (displayDark) {
+            WindowCompat.setDecorFitsSystemWindows(window, false)
+            WindowInsetsControllerCompat(window, binding.mainActivity).let { controller ->
+                controller.hide(WindowInsetsCompat.Type.systemBars())
+                controller.systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+            }
+            binding.actionbar.background = ResourcesCompat.getDrawable(baseContext.resources, R.drawable.border, null)
+        } else {
+            WindowCompat.setDecorFitsSystemWindows(window, true)
+            WindowInsetsControllerCompat(window, binding.mainActivity).show(WindowInsetsCompat.Type.systemBars())
+            binding.actionbar.background = null
+            binding.actionbar.setBackgroundColor(ResourcesCompat.getColor(baseContext.resources,  R.color.purple_200, null))
+        }
+    }
+
 }

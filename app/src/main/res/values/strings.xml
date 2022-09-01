@@ -8,6 +8,8 @@
     <string name="display_sleep_sum_on">Display Can Sleep</string>
     <string name="display_sleep_sum_off">Display Cannot Sleep</string>
 
+    <string name="display_dark">Dark Display</string>
+
     <string name="bg_units">Units</string>
 
     <string name="insulin_prefs_title">Insulin</string>

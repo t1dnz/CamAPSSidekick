@@ -9,6 +9,10 @@
             android:summaryOn="@string/display_sleep_sum_on"
             android:title="@string/display_sleep" />
 
+        <SwitchPreferenceCompat
+            android:key="display_dark"
+            android:title="@string/display_dark" />
+
         <ListPreference
             app:defaultValue="mmoll"
             app:entries="@array/bg_units"
