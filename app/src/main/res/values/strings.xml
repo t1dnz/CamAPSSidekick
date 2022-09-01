@@ -21,8 +21,9 @@
     <string name="diasend_enable">Enable</string>
     <string name="diasend_username">Username</string>
     <string name="diasend_password">Password</string>
-    <!-- TODO: Remove or change this placeholder text -->
-    <string name="hello_blank_fragment">Hello blank fragment</string>
 
+    <string name="camaps_pref_title">Pull from CamAPS</string>
+    <string name="camaps_summary">If CamAPS is on this phone, this app can listen to BGL readings</string>
+    <string name="camaps_enable_title">Enable BGL readings from CamAPS</string>
 
 </resources>

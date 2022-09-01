@@ -45,8 +45,15 @@
 
     </PreferenceCategory>
 
-    <PreferenceCategory android:title="@string/diasend_pref_title">
+    <PreferenceCategory android:title="@string/camaps_pref_title">
 
+    <SwitchPreferenceCompat
+        android:key="camaps_enable"
+        android:summary="@string/camaps_summary"
+        android:title="@string/camaps_enable_title" />
+    </PreferenceCategory>
+
+    <PreferenceCategory android:title="@string/diasend_pref_title">
         <SwitchPreferenceCompat
             android:key="diasend_enable"
             android:title="@string/diasend_enable" />

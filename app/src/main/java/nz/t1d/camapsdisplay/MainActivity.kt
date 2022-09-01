@@ -47,21 +47,14 @@ class MainActivity : AppCompatActivity(), SharedPreferences.OnSharedPreferenceCh
         setupActionBarWithNavController(navController, appBarConfiguration)
 
 
-        // Make sure listenting to notifications has been enabled to listen to CamAPS notifs
-        val intent = Intent("android.settings.ACTION_NOTIFICATION_LISTENER_SETTINGS")
-        if (!isNotificationServiceEnabled()) {
-            startActivity(intent)
-        }
-
-
         // Setup Preferences
         val prefs = PreferenceManager.getDefaultSharedPreferences(applicationContext)
         setupDisplaySleep(prefs.getBoolean("display_sleep", false))
         setupDisplayDark(prefs.getBoolean("display_dark", false))
+        setupCamAPSPollerListener(prefs.getBoolean("camaps_enable", false))
         prefs.registerOnSharedPreferenceChangeListener(this)
 
         // initialize the camAPS notification receiver to start listening
-        camAPSNotificationReceiver.listen()
         diasendPoller.start_diasend_poller()
     }
 
@@ -103,6 +96,7 @@ class MainActivity : AppCompatActivity(), SharedPreferences.OnSharedPreferenceCh
         when (key) {
             "display_sleep" -> setupDisplaySleep(sp.getBoolean(key, false))
             "display_dark" -> setupDisplayDark(sp.getBoolean(key, false))
+            "camaps_enable" -> setupCamAPSPollerListener(sp.getBoolean(key, false))
         }
     }
 
@@ -128,6 +122,19 @@ class MainActivity : AppCompatActivity(), SharedPreferences.OnSharedPreferenceCh
             WindowInsetsControllerCompat(window, binding.mainActivity).show(WindowInsetsCompat.Type.systemBars())
             binding.actionbar.background = null
             binding.actionbar.setBackgroundColor(ResourcesCompat.getColor(baseContext.resources,  R.color.purple_200, null))
+        }
+    }
+
+    private fun setupCamAPSPollerListener(enableCamAPS: Boolean) {
+        if (enableCamAPS) {
+            // Make sure listenting to notifications has been enabled to listen to CamAPS notifs
+            val intent = Intent("android.settings.ACTION_NOTIFICATION_LISTENER_SETTINGS")
+            if (!isNotificationServiceEnabled()) {
+                startActivity(intent)
+            }
+            camAPSNotificationReceiver.listen()
+        } else {
+            camAPSNotificationReceiver.stopListening()
         }
     }
 
