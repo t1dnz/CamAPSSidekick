@@ -191,12 +191,14 @@ class DisplayFragment : Fragment() {
                 image.setImageDrawable(dBolus)
                 action.text = buildSpannedString {
                     bold { color(ResourcesCompat.getColor(requireContext().resources, R.color.teal_700, null)) { append("${re.value}u") } }
-                    append(" bolus")
                     val ci = re.carbIntake
                     if (ci != null) {
+                        append(" bolus")
                         italic { append(" for ") }
                         bold { color(ResourcesCompat.getColor(requireContext().resources, R.color.teal_700,null)) {  append("${nf0dp.format(ci.value)}g") } }
                         append(" carbs")
+                    } else {
+                        append(" correction")
                     }
                 }
 
