@@ -1,4 +1,4 @@
-package nz.t1d.camapsdisplay
+package nz.t1d.camapssidekick
 
 import org.junit.Test
 

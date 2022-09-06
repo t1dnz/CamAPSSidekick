@@ -1,7 +1,7 @@
-package nz.t1d.camapsdisplay
+package nz.t1d.camapssidekick
 
 import android.app.Application
 import dagger.hilt.android.HiltAndroidApp
 
 @HiltAndroidApp
-class CamAPSDisplayApplication : Application()
+class CamAPSSidekickApplication : Application()

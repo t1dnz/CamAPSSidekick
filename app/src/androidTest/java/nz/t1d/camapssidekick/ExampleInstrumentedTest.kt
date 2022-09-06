@@ -1,4 +1,4 @@
-package nz.t1d.camapsdisplay
+package nz.t1d.camapssidekick
 
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.ext.junit.runners.AndroidJUnit4

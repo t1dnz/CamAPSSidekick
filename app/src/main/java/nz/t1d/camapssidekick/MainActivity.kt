@@ -1,4 +1,4 @@
-package nz.t1d.camapsdisplay
+package nz.t1d.camapssidekick
 
 import android.content.ComponentName
 import android.content.Intent
@@ -6,20 +6,18 @@ import android.content.SharedPreferences
 import android.os.Bundle
 import android.provider.Settings
 import android.text.TextUtils
-import android.view.View
 import android.view.WindowManager
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.res.ResourcesCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
-import androidx.lifecycle.lifecycleScope
 import androidx.navigation.findNavController
 import androidx.navigation.ui.AppBarConfiguration
 import androidx.navigation.ui.setupActionBarWithNavController
 import androidx.preference.PreferenceManager
 import dagger.hilt.android.AndroidEntryPoint
-import nz.t1d.camapsdisplay.databinding.ActivityMainBinding
+import nz.t1d.camapssidekick.databinding.ActivityMainBinding
 import nz.t1d.di.CamAPSNotificationReceiver
 import nz.t1d.di.DiasendPoller
 import javax.inject.Inject

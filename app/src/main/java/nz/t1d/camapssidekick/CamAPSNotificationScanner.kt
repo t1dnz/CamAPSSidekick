@@ -1,4 +1,4 @@
-package nz.t1d.camapsdisplay
+package nz.t1d.camapssidekick
 
 import android.app.Notification
 import android.content.Intent

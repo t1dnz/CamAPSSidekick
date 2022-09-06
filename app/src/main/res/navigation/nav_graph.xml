@@ -6,7 +6,7 @@
 
     <fragment
         android:id="@+id/navDisplayFragment"
-        android:name="nz.t1d.camapsdisplay.DisplayFragment"
+        android:name="nz.t1d.camapssidekick.DisplayFragment"
         android:label="CamAPSDisplay"
         tools:layout="@layout/fragment_display">
         <action
@@ -18,7 +18,7 @@
 
     <fragment
         android:id="@+id/navSettingsFragment"
-        android:name="nz.t1d.camapsdisplay.SettingsFragment"
+        android:name="nz.t1d.camapssidekick.SettingsFragment"
         android:label="Settings" >
         <action
             android:id="@+id/action_navSettingsFragment_to_navDisplayFragment"

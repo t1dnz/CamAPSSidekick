@@ -30,12 +30,15 @@ Also this is my first android app, so no guarantees.
 Better erroring when things go wrong (wrong password, no server, no internet...)
 Change of units actually doing something (including changing decimal points in UI)
 Show logs/report logs in the app (maybe firebase?)
+Actual theme support for colours and night-display-mode.
+Publish and properly sign the application
 
 #### Other features
 highlight peaking and onsetting insulin
 add upcoming insulin (like next 20mins of insulin)
 Clickable Graph for BGL/basal changes
 Last time data was recieved from diasend (checking that it is actually working or the other end is broken)
+slide left on stats info, current/daily stats 
 
 #### Replacement of xdrip as side car
 send to dexcom share BGLs

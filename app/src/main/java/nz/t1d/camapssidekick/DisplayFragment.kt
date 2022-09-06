@@ -1,10 +1,6 @@
-package nz.t1d.camapsdisplay
+package nz.t1d.camapssidekick
 
-import android.animation.ArgbEvaluator
-import android.animation.ObjectAnimator
-import android.animation.ValueAnimator
 import android.content.res.Resources
-import android.graphics.Color
 import android.os.Bundle
 import android.util.TypedValue
 import android.view.Gravity
@@ -18,7 +14,6 @@ import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.RelativeLayout
 import android.widget.TextView
-import androidx.core.content.ContextCompat
 import androidx.core.content.res.ResourcesCompat
 import androidx.core.text.bold
 import androidx.core.text.buildSpannedString
@@ -31,14 +26,13 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.Lifecycle
 import androidx.navigation.fragment.findNavController
 import dagger.hilt.android.AndroidEntryPoint
-import nz.t1d.camapsdisplay.databinding.FragmentDisplayBinding
+import nz.t1d.camapssidekick.databinding.FragmentDisplayBinding
 import nz.t1d.di.BGLReading
 import nz.t1d.di.BaseDataClass
 import nz.t1d.di.BolusInsulin
 import nz.t1d.di.CarbIntake
 import nz.t1d.di.DiasendPoller
 import nz.t1d.di.DisplayDataRepository
-import okhttp3.internal.wait
 import java.text.NumberFormat
 import javax.inject.Inject
 

@@ -4,7 +4,7 @@ import android.content.Context
 import android.util.Log
 import androidx.preference.PreferenceManager
 import dagger.hilt.android.qualifiers.ApplicationContext
-import nz.t1d.camapsdisplay.R
+import nz.t1d.camapssidekick.R
 import nz.t1d.diasend.DiasendDatum
 import java.text.DecimalFormat
 import java.time.Duration
@@ -16,7 +16,6 @@ import java.util.*
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlin.math.truncate
-import kotlin.reflect.KClass
 
 
 interface BaseDataClass {
