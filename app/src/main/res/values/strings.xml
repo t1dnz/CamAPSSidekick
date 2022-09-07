@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">CamAPSDisplay</string>
+    <string name="app_name">CamAPSSidekick</string>
 
     <!-- Preference Strings -->
     <string name="general_prefs_title">General</string>

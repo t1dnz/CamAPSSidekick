@@ -25,6 +25,7 @@ import androidx.core.view.setMargins
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Lifecycle
 import androidx.navigation.fragment.findNavController
+import com.google.android.material.snackbar.Snackbar
 import dagger.hilt.android.AndroidEntryPoint
 import nz.t1d.camapssidekick.databinding.FragmentDisplayBinding
 import nz.t1d.di.BGLReading
@@ -75,6 +76,8 @@ class DisplayFragment : Fragment() {
             val job = diasendPoller.fetchData()
             job.invokeOnCompletion {  binding.swiperefresh.isRefreshing = false }
         }
+
+
 
         // Setup the actions on the menu when the fragment is open
         val menuHost: MenuHost = requireActivity()

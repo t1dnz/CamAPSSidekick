@@ -1,4 +1,4 @@
-# CamAPSDisplay
+# CamAPS Sidekick
 
 This app is designed to show blood glucose level (BGL) readings from CamAPS FX (camdiab.com) as a unsleeping display, so at a glance at your smartphone screen you can see what the current glucose level is.
 
@@ -32,6 +32,8 @@ Change of units actually doing something (including changing decimal points in U
 Show logs/report logs in the app (maybe firebase?)
 Actual theme support for colours and night-display-mode.
 Publish and properly sign the application
+get an app icon
+
 
 #### Other features
 highlight peaking and onsetting insulin
@@ -39,6 +41,7 @@ add upcoming insulin (like next 20mins of insulin)
 Clickable Graph for BGL/basal changes
 Last time data was recieved from diasend (checking that it is actually working or the other end is broken)
 slide left on stats info, current/daily stats 
+child lock for settings in the app
 
 #### Replacement of xdrip as side car
 send to dexcom share BGLs

@@ -10,7 +10,7 @@ android {
     compileSdk 32
 
     defaultConfig {
-        applicationId "nz.t1d.camapsdisplay"
+        applicationId "nz.t1d.camapssidekick"
         minSdk 26
         targetSdk 30
         versionCode 1
