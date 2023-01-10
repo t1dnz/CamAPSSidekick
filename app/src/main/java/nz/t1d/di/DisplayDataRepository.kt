@@ -4,194 +4,14 @@ import android.content.Context
 import android.util.Log
 import androidx.preference.PreferenceManager
 import dagger.hilt.android.qualifiers.ApplicationContext
-import nz.t1d.camapssidekick.R
-import nz.t1d.clients.diasend.DiasendDatum
-import java.text.DecimalFormat
+import nz.t1d.datamodels.*
 import java.time.Duration
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
-import java.time.ZoneId
 import java.util.*
 import javax.inject.Inject
 import javax.inject.Singleton
-import kotlin.math.truncate
-
-
-interface BaseDataClass {
-    val time: LocalDateTime
-    var value: Float
-
-    fun secondsAgo(): Long {
-        return Duration.between(time, LocalDateTime.now()).toMillis() / 1000L // toSeconds not supported yet
-    }
-
-
-    fun minsAgo(): Long {
-        return Duration.between(time, LocalDateTime.now()).toMinutes()
-    }
-
-    fun minsAgoString(): String {
-        val mins = minsAgo()
-        val hours = truncate(mins / 60.0f).toLong()
-
-        if (hours != 0L) {
-            val hourMins = mins - (60 * hours)
-            return "${hours}h ${hourMins}m ago"
-        }
-        return "${mins}m ago"
-    }
-}
-
-data class BasalInsulinChange(
-    override var value: Float,
-    override var time: LocalDateTime,
-) : BaseDataClass
-
-data class BolusInsulin(
-    override var value: Float,
-    override var time: LocalDateTime,
-    var onset: Float,
-    var peak: Float,
-    var dia: Float,
-) : BaseDataClass {
-    private val TAG = "BolusInsulin"
-
-    // The carb intake that is associated with this bolus
-    var carbIntake: CarbIntake? = null
-
-    fun valueAfterDecay(): Float {
-        // This is taken from the Bilinear algorithm here https://openaps.readthedocs.io/en/latest/docs/While%20You%20Wait%20For%20Gear/understanding-insulin-on-board-calculations.html
-        // actual code here https://github.com/openaps/oref0/blob/88cf032aa74ff25f69464a7d9cd601ee3940c0b3/lib/iob/calculate.js#L36
-        // basically insulin rate increases linearly from start to peak, then decreases linearly from peak to dia
-        // this makes a triangle which we can calculate the area left which will be the total remaining insulin
-        // TODO: maybe use the exponential insulin curves also described on the page above
-        // TODO: take onset into consideration by squashing triangle a bit
-
-        val minsAgo = minsAgo().toFloat()
-        if (minsAgo >= dia) {
-            return 0f
-        }
-
-        // percent of insulin used is 100 so we make a triangle whose area is 100
-        // 1/2 w * h  = 100, w = dia, solve for h. so h = (100*2)/dia
-        val height = 200f / dia // for 180 it is about 1.11
-
-        // Now we can divide that into two right angle triangels, first the one going to peak the second coming down
-        // Because it is linear up and linear down all we need to know is the interior angles of the two triangles to find the area
-        val areaOfFirstTrialngle = (peak * height) / 2 // 1/2 * w * h
-        val areaOfSecondTrialngle = ((dia - peak) * height) / 2 // 1/2 * w * h
-
-        val slopeFirstTriangle = height / peak
-        val slopeSecondTriangle = height / (dia - peak)
-
-
-        var percentOfInsulinUsed = 0f
-        var pastPeak = false
-        var triangleArea = 0f
-        if (minsAgo < peak) {
-            pastPeak = false
-            triangleArea = areaOfTriangleFromSlope(slopeFirstTriangle, minsAgo)
-            percentOfInsulinUsed = triangleArea
-
-        } else {
-            pastPeak = true
-
-            // The second triangle is at the back, so need to minus it from the total to find actual area
-            triangleArea = areaOfTriangleFromSlope(slopeSecondTriangle, dia - minsAgo)
-
-            percentOfInsulinUsed = areaOfFirstTrialngle + (areaOfSecondTrialngle - triangleArea)
-        }
-
-        val ret = (1 - (percentOfInsulinUsed / 100)) * value
-        return ret
-    }
-
-    private fun areaOfTriangleFromSlope(slope: Float, width: Float): Float {
-        val height = slope * width
-        return (height * width) / 2f
-    }
-}
-
-data class CarbIntake(
-    override var value: Float,
-    override var time: LocalDateTime,
-    var decay: Float,
-) : BaseDataClass
-
-
-enum class DATA_SOURCE{CAMAPS_NOTIF, DIASEND}
-
-data class BGLReading(
-    override var value: Float,
-    override var time: LocalDateTime,
-    var bglUnit: String = "mmol/L",
-) : BaseDataClass {
-    private val TAG = "BGLReading"
-    var source: DATA_SOURCE = DATA_SOURCE.DIASEND
-
-    // reference to previous reading making this kind of a
-    var previousReading: BGLReading? = null
-
-    fun calculateDiff(): Float {
-        previousReading?.let { pr ->
-            val duration = Duration.between(pr.time, time).toMillis() / 1000
-            // Calculate rate per min then multiply by 5
-            val rate = (value - pr.value) / duration
-            return rate * 300
-        }
-        return 0f
-    }
-
-
-    // Return the BGL reading we trust more to be correct
-    fun lessTruthy(that: BGLReading) : BGLReading {
-        if (source == DATA_SOURCE.DIASEND) {
-            return that
-        }
-        if (that.source == DATA_SOURCE.DIASEND) {
-            return this
-        }
-
-        // At this point they must both be notifs so we just return the older one
-        if (time > that.time) {
-            return this
-        }
-        return that
-    }
-
-    fun diffString(unit: Boolean = true): String {
-        var  diff = calculateDiff()
-        val dec = DecimalFormat("+#,##0.0;-#")
-        if (unit) {
-            return "${dec.format(diff)} $bglUnit"
-        }
-        return dec.format(diff)
-    }
-
-    fun directionImageId(): Int? {
-        var  diff = calculateDiff()
-        if (diff == null) {
-            return null
-        }
-        when {
-            diff < -1 -> {
-                return R.drawable.ic_down_arrow
-            }
-            diff < -0.2 -> {
-                return R.drawable.ic_downish_arrow
-            }
-            diff > 1 -> {
-                return R.drawable.ic_up_arrow
-            }
-            diff > 0.2 -> {
-                return R.drawable.ic_upish_arrow
-            }
-        }
-        return R.drawable.ic_side_arrow
-    }
-}
-
 
 object dataComparitor : Comparator<BaseDataClass> {
     override fun compare(p0: BaseDataClass?, p1: BaseDataClass?): Int {
@@ -204,6 +24,12 @@ object dataComparitor : Comparator<BaseDataClass> {
 
 @Singleton
 class DisplayDataRepository @Inject constructor(@ApplicationContext context: Context) {
+
+    var insulinBoluses: SortedSet<BolusInsulin> = sortedSetOf(dataComparitor)
+    var insulinBasalChanges: SortedSet<BasalInsulinChange> = sortedSetOf(dataComparitor)
+    var bglReadings: SortedSet<BGLReading> = sortedSetOf(dataComparitor)
+    var carbs: SortedSet<CarbIntake> = sortedSetOf(dataComparitor)
+
     val prefs = PreferenceManager.getDefaultSharedPreferences(context)
 
     var insulinDuration = prefs.getString("insulin_duration", "0.0")!!.toFloat()
@@ -219,20 +45,17 @@ class DisplayDataRepository @Inject constructor(@ApplicationContext context: Con
     var insulingBasalTotal: Float = 0f
     var insulinBolusTotal: Float = 0f
     var insulinCurrentBasal: Float = 0f
-    var insulinBoluses: SortedSet<BolusInsulin> = sortedSetOf(dataComparitor)
-    var insulinBasalChanges: SortedSet<BasalInsulinChange> = sortedSetOf(dataComparitor)
     var insulinBasalBoluses: SortedSet<BolusInsulin> = sortedSetOf(dataComparitor)
 
     // carbs
     var carbsOnBoard: Float = 0f
     var carbsTotal: Float = 0f
-    var carbs: SortedSet<CarbIntake> = sortedSetOf(dataComparitor)
 
     // bgl
     var timeInRange: Float = 0f
     var meanBGL: Float = 0f
     var stdBGL: Float = 0f
-    var bglReadings: SortedSet<BGLReading> = sortedSetOf(dataComparitor)
+
 
     var recentEvents: SortedSet<BaseDataClass> = sortedSetOf(dataComparitor)
 
@@ -255,7 +78,7 @@ class DisplayDataRepository @Inject constructor(@ApplicationContext context: Con
     }
 
 
-    fun addPatientData(patientData: List<DiasendDatum>?) {
+    fun addPatientData(patientData: DataCollection) {
         if (patientData == null) {
             return
         }
@@ -270,30 +93,15 @@ class DisplayDataRepository @Inject constructor(@ApplicationContext context: Con
         val now = LocalDateTime.now()
         val midnight = LocalDateTime.of(LocalDate.now(), LocalTime.MIDNIGHT)
         val insulinDurationTime = now.minusMinutes((insulinDuration * 1.2).toLong())
-        val carbDurationTime = now.minusMinutes((120).toLong())
+        val carbDurationTime = now.minusMinutes((carbDuration).toLong())
         val midnightMinus = midnight.minusMinutes((insulinDuration * 1.5).toLong())
 
-        // extract all the types
-        for (d in patientData) {
-            var ld = d.createdAt.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime()
-            when (d.type) {
-                "insulin_bolus" -> {
-                    insulinBoluses.add(BolusInsulin(d.totalValue, ld, insulinOnset, insulinPeak, insulinDuration))
-                }
-                "carb" -> {
-                    carbs.add(CarbIntake(d.value, ld, carbDuration))
-                }
-                "insulin_basal" -> {
-                    insulinBasalChanges.add(BasalInsulinChange(d.value, ld))
-                }
-                "glucose" -> {
-                    bglReadings.add(BGLReading(d.value, ld))
-                }
-                else -> {
-                    Log.d(TAG, "UNKNOWN DIASEND TYPE ${d.type}")
-                }
-            }
-        }
+        // Join all the data together
+        insulinBoluses.addAll(patientData.insulinBoluses)
+        carbs.addAll(patientData.carbs)
+        insulinBasalChanges.addAll(patientData.insulinBasalChanges)
+        bglReadings.addAll(patientData.bglReadings)
+
 
         // Since this program can run for days to make sure we are discarding any really old data we remove it from the sets here
         insulinBoluses = insulinBoluses.filter { d -> d.time > midnightMinus }.toSortedSet(dataComparitor)
@@ -333,7 +141,7 @@ class DisplayDataRepository @Inject constructor(@ApplicationContext context: Con
                 insulinBolusTotal += d.value
             }
 
-            val bolusesRemaingInsulin = d.valueAfterDecay()
+            val bolusesRemaingInsulin = d.valueAfterDecay(insulinOnset, insulinPeak, insulinDuration)
             insulinOnBoardBolus += bolusesRemaingInsulin
             insulinOnBoard += bolusesRemaingInsulin
 
@@ -350,7 +158,7 @@ class DisplayDataRepository @Inject constructor(@ApplicationContext context: Con
                 insulingBasalTotal += d.value
             }
 
-            val bolusesRemaingInsulin = d.valueAfterDecay()
+            val bolusesRemaingInsulin = d.valueAfterDecay(insulinOnset, insulinPeak, insulinDuration)
             insulinOnBoardBasal += bolusesRemaingInsulin
             insulinOnBoard += bolusesRemaingInsulin
         }
@@ -478,7 +286,7 @@ class DisplayDataRepository @Inject constructor(@ApplicationContext context: Con
                 break
             }
             // divide by 15 to make the rate per 4 mins from per hour
-            insulinBasalBoluses.add(BolusInsulin(currentBasal.value / 15.0f, basalTime, insulinOnset, insulinPeak, insulinDuration))
+            insulinBasalBoluses.add(BolusInsulin(currentBasal.value / 15.0f, basalTime))
         }
     }
 

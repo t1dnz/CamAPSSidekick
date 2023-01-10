@@ -106,7 +106,7 @@ class DiasendPoller @Inject constructor(
                 from!!,
                 LocalDateTime.now().plusMinutes(10)
             )
-            Log.d(TAG, "Returning list of data ${patientData?.size}")
+
             ddr.addPatientData(patientData)
             // change from to be to 30 mins ago
             from = LocalDateTime.now().minusMinutes(30)

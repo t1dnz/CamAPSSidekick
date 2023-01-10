@@ -28,10 +28,10 @@ import androidx.navigation.fragment.findNavController
 import com.google.android.material.snackbar.Snackbar
 import dagger.hilt.android.AndroidEntryPoint
 import nz.t1d.camapssidekick.databinding.FragmentDisplayBinding
-import nz.t1d.di.BGLReading
-import nz.t1d.di.BaseDataClass
-import nz.t1d.di.BolusInsulin
-import nz.t1d.di.CarbIntake
+import nz.t1d.datamodels.BGLReading
+import nz.t1d.datamodels.BaseDataClass
+import nz.t1d.datamodels.BolusInsulin
+import nz.t1d.datamodels.CarbIntake
 import nz.t1d.di.DiasendPoller
 import nz.t1d.di.DisplayDataRepository
 import java.text.NumberFormat
@@ -110,7 +110,7 @@ class DisplayFragment : Fragment() {
     fun updateValues() {
         if (ddr.bglReadings.size > 0) {
             val first = ddr.bglReadings.first()
-            val imageID = first.directionImageId()
+            val imageID = directionImageId(first)
             if (imageID != null) {
                 binding.bglImage.setImageDrawable(ResourcesCompat.getDrawable(requireContext().resources, imageID, null))
             }
@@ -209,8 +209,9 @@ class DisplayFragment : Fragment() {
                 }
             }
             is BGLReading -> {
-                if (re.directionImageId() != null) {
-                    image.setImageDrawable(ResourcesCompat.getDrawable(requireContext().resources, re.directionImageId()!!, null))
+                val di = directionImageId(re)
+                if (di != null) {
+                    image.setImageDrawable(ResourcesCompat.getDrawable(requireContext().resources, di!!, null))
                 }
                 action.text = buildSpannedString {
                     bold { color(ResourcesCompat.getColor(requireContext().resources, R.color.teal_700, null)) { append("${re.value}mmol/L ") } }
@@ -244,5 +245,26 @@ class DisplayFragment : Fragment() {
         _binding = null
     }
 
+    fun directionImageId(bgl : BGLReading): Int? {
+        var  diff = bgl.calculateDiff()
+        if (diff == null) {
+            return null
+        }
+        when {
+            diff < -1 -> {
+                return R.drawable.ic_down_arrow
+            }
+            diff < -0.2 -> {
+                return R.drawable.ic_downish_arrow
+            }
+            diff > 1 -> {
+                return R.drawable.ic_up_arrow
+            }
+            diff > 0.2 -> {
+                return R.drawable.ic_upish_arrow
+            }
+        }
+        return R.drawable.ic_side_arrow
+    }
 
 }
