@@ -2,7 +2,7 @@ package nz.t1d.diasend
 
 import android.content.Context
 import nz.t1d.clients.diasend.DiasendClient
-import nz.t1d.datamodels.DataCollection
+import nz.t1d.datamodels.PatientData
 
 import androidx.preference.PreferenceManager
 
@@ -29,7 +29,7 @@ class DiasendClient @Inject constructor(@ApplicationContext context: Context) {
     }
 
 
-    suspend fun getPatientData(date_from: LocalDateTime, date_to: LocalDateTime): DataCollection {
+    suspend fun getPatientData(date_from: LocalDateTime, date_to: LocalDateTime): PatientData {
         return diasendClient.getPatientData(date_from, date_to)
     }
 }

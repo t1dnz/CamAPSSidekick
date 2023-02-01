@@ -76,5 +76,5 @@ dependencies {
     androidTestImplementation 'androidx.test.ext:junit:1.1.3'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.4.0'
 
-    implementation 'com.github.t1dnz.t1djava:lib:29f2d3c97b'
+    implementation 'com.github.t1dnz.t1djava:lib:333a9ac9dc'
 }
